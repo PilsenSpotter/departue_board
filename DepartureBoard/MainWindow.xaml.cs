@@ -99,8 +99,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     public string SelectedStopLabel => string.IsNullOrWhiteSpace(StopId)
-        ? "Nevybráno"
-        : $"{SelectedStopName} ({StopId})";
+        ? "Nevybrano"
+        : StopId;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -282,7 +282,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         StopId = stop.Id;
         SelectedStopName = stop.Name;
-        StopSearchText = $"{stop.Name} ({stop.Id})";
+                StopSearchText = stop.Id;
         StopResults.Clear();
         lb.SelectedItem = null;
 
@@ -306,3 +306,5 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }
+
+
