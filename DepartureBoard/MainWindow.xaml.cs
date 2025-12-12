@@ -31,11 +31,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public ObservableCollection<DepartureDisplay> Departures { get; } = new();
     public ObservableCollection<StopEntry> StopResults { get; } = new();
+    public ObservableCollection<StopEntry> SelectedStops { get; } = new();
 
     public bool ShowBus { get; set; } = true;
     public bool ShowTram { get; set; } = true;
     public bool ShowMetro { get; set; } = true;
     public bool ShowTrolley { get; set; } = true;
+
+    public bool ShowStopName => _selectedStopIds.Count > 1;
 
     public int MinutesAfter
     {
@@ -183,7 +186,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             Line = departure.Route?.ShortName ?? "-",
             Destination = departure.Trip?.Headsign ?? "-",
-            StopName = departure.Stop?.Name ?? string.Empty,
+            StopName = ResolveStopName(departure),
             Platform = string.IsNullOrWhiteSpace(departure.Stop?.PlatformCode) ? "-" : departure.Stop!.PlatformCode!,
             DepartureTime = when.Value.ToLocalTime().ToString("HH:mm"),
             Countdown = countdown,
@@ -279,18 +282,36 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void StopResults_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (sender is not ListBox lb || lb.SelectedItem is not StopEntry stop)
+        if (sender is not ListBox lb)
         {
             return;
         }
 
-        _selectedStopIds.Clear();
-        _selectedStopIds.AddRange(stop.StopIds);
+        foreach (var stop in e.AddedItems.OfType<StopEntry>())
+        {
+            if (SelectedStops.Any(s => s.PrimaryId.Equals(stop.PrimaryId, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
 
-        StopSearchText = stop.Name;
-        StopResults.Clear();
+            SelectedStops.Add(stop);
+        }
+
         lb.SelectedItem = null;
 
+        UpdateSelectedStopIds();
+        _ = RefreshDeparturesAsync();
+    }
+
+    private void RemoveSelectedStop_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: StopEntry stop })
+        {
+            return;
+        }
+
+        SelectedStops.Remove(stop);
+        UpdateSelectedStopIds();
         _ = RefreshDeparturesAsync();
     }
 
@@ -304,5 +325,46 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         field = value;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         return true;
+    }
+
+    private void UpdateSelectedStopIds()
+    {
+        _selectedStopIds.Clear();
+        var ids = SelectedStops
+            .SelectMany(s => s.StopIds)
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+
+        _selectedStopIds.AddRange(ids);
+
+        OnPropertyChanged(nameof(ShowStopName));
+    }
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    private string ResolveStopName(Departure departure)
+    {
+        var apiName = departure.Stop?.Name;
+        if (!string.IsNullOrWhiteSpace(apiName))
+        {
+            return apiName;
+        }
+
+        var stopId = departure.Stop?.Id;
+        if (!string.IsNullOrWhiteSpace(stopId))
+        {
+            var match = SelectedStops.FirstOrDefault(s => s.StopIds.Contains(stopId, StringComparer.OrdinalIgnoreCase));
+            if (match != null)
+            {
+                return match.Name;
+            }
+
+            return stopId;
+        }
+
+        return string.Empty;
     }
 }

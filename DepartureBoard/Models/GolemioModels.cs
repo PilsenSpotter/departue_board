@@ -56,6 +56,9 @@ public class Stop
     [JsonPropertyName("name")]
     public string? Name { get; set; }
 
+    [JsonPropertyName("id")]
+    public string? Id { get; set; }
+
     [JsonPropertyName("platform_code")]
     public string? PlatformCode { get; set; }
 }

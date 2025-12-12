@@ -11,6 +11,7 @@
     <Window.Resources>
         <SolidColorBrush x:Key="AccentBrush" Color="#55D6BE" />
         <SolidColorBrush x:Key="MutedBrush" Color="#9BB1C8" />
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
     </Window.Resources>
 
     <Grid Margin="16">
@@ -48,6 +49,30 @@
                             </ListBox>
                         </ScrollViewer>
                     </Border>
+                    <StackPanel Margin="0 6 0 0">
+                        <TextBlock Text="Vybrane zastavky" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
+                        <ItemsControl ItemsSource="{Binding SelectedStops}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#1A2C44" CornerRadius="6" Padding="6" Margin="0 4 8 4" BorderBrush="#233A4F" BorderThickness="1">
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Margin="0 0 6 0"/>
+                                                <Button Content="x" Width="22" Height="22" Padding="0" Click="RemoveSelectedStop_OnClick"
+                                                        Tag="{Binding}" ToolTip="Odebrat zastavku"/>
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding DisplayIds}" FontSize="11" Foreground="{StaticResource MutedBrush}"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
                 </StackPanel>
 
                 <StackPanel Margin="0 0 16 8">
@@ -117,12 +142,19 @@
                                 <DataTemplate>
                                     <StackPanel>
                                         <TextBlock Text="{Binding Destination}" FontSize="14" FontWeight="SemiBold" />
-                                        <TextBlock Text="{Binding StopName}" FontSize="11" Foreground="{StaticResource MutedBrush}" />
                                     </StackPanel>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
 
+                        <GridViewColumn Width="200" Header="Zastavka">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding StopName}" FontSize="12" Foreground="{StaticResource MutedBrush}"
+                                               Visibility="{Binding DataContext.ShowStopName, RelativeSource={RelativeSource AncestorType={x:Type Window}}, Converter={StaticResource BoolToVisibility}}"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
                         <GridViewColumn Width="110" Header="Stanoviště">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
