@@ -10,27 +10,39 @@ using System.Windows.Controls;
 using System.Windows.Threading;
 using DepartureBoard.Models;
 using DepartureBoard.Services;
+using System.Threading;
 
 namespace DepartureBoard;
 
 public partial class MainWindow : Window, INotifyPropertyChanged
 {
     private readonly GolemioClient _client = new();
+    private readonly StopLookupService _stopLookup = new();
     private readonly DispatcherTimer _timer;
+    private CancellationTokenSource? _stopSearchCts;
     private bool _isLoading;
 
-    private string _stopId = "U215Z2P";
+    private string _stopId = string.Empty;
     private int _minutesAfter = 20;
     private int _refreshSeconds = 30;
     private string _apiKey = string.Empty;
     private string? _statusMessage;
+    private string _stopSearchText = string.Empty;
+    private string _selectedStopName = string.Empty;
 
     public ObservableCollection<DepartureDisplay> Departures { get; } = new();
+    public ObservableCollection<StopEntry> StopResults { get; } = new();
 
     public string StopId
     {
         get => _stopId;
-        set => SetField(ref _stopId, value);
+        set
+        {
+            if (SetField(ref _stopId, value))
+            {
+                OnPropertyChanged(nameof(SelectedStopLabel));
+            }
+        }
     }
 
     public int MinutesAfter
@@ -67,6 +79,28 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         get => _statusMessage;
         set => SetField(ref _statusMessage, value);
     }
+
+    public string StopSearchText
+    {
+        get => _stopSearchText;
+        set => SetField(ref _stopSearchText, value);
+    }
+
+    public string SelectedStopName
+    {
+        get => _selectedStopName;
+        set
+        {
+            if (SetField(ref _selectedStopName, value))
+            {
+                OnPropertyChanged(nameof(SelectedStopLabel));
+            }
+        }
+    }
+
+    public string SelectedStopLabel => string.IsNullOrWhiteSpace(StopId)
+        ? "Nevybráno"
+        : $"{SelectedStopName} ({StopId})";
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -200,6 +234,61 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return $"{sign}{Math.Abs(delay.TotalMinutes):0} min";
     }
 
+    private async void StopSearchBox_OnTextChanged(object sender, TextChangedEventArgs e)
+    {
+        _stopSearchCts?.Cancel();
+
+        var query = StopSearchText;
+        if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
+        {
+            StopResults.Clear();
+            return;
+        }
+
+        var cts = new CancellationTokenSource();
+        _stopSearchCts = cts;
+
+        try
+        {
+            StatusMessage = _stopLookup.IsLoaded ? "Hledám zastávky..." : "Stahuji seznam zastávek PID...";
+            var results = await _stopLookup.SearchAsync(query, 25, cts.Token);
+
+            StopResults.Clear();
+            foreach (var r in results)
+            {
+                StopResults.Add(r);
+            }
+
+            StatusMessage = StopResults.Count == 0
+                ? "Žádná zastávka nenalezena."
+                : $"Vyber zastávku ({StopResults.Count} návrhů).";
+        }
+        catch (OperationCanceledException)
+        {
+            // ignore
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Vyhledání selhalo: {ex.Message}";
+        }
+    }
+
+    private void StopResults_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not ListBox lb || lb.SelectedItem is not StopEntry stop)
+        {
+            return;
+        }
+
+        StopId = stop.Id;
+        SelectedStopName = stop.Name;
+        StopSearchText = $"{stop.Name} ({stop.Id})";
+        StopResults.Clear();
+        lb.SelectedItem = null;
+
+        _ = RefreshDeparturesAsync();
+    }
+
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
         if (EqualityComparer<T>.Default.Equals(field, value))
@@ -210,5 +299,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         field = value;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         return true;
+    }
+
+    private void OnPropertyChanged(string propertyName)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

@@ -26,10 +26,35 @@
         </StackPanel>
 
         <Border Grid.Row="1" Background="#112233" Padding="12" CornerRadius="8">
-            <WrapPanel ItemWidth="230" MinWidth="200" VerticalAlignment="Center" Margin="0" >
-                <StackPanel Margin="0 0 16 8">
-                    <TextBlock Text="ID zastávky (PID id)" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
-                    <TextBox Text="{Binding StopId, UpdateSourceTrigger=PropertyChanged}" Width="200" />
+            <WrapPanel ItemWidth="260" MinWidth="220" VerticalAlignment="Center" Margin="0" >
+                <StackPanel Margin="0 0 16 8" Width="250">
+                    <TextBlock Text="Vyhledat zastávku" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
+                    <TextBox x:Name="StopSearchBox"
+                             Text="{Binding StopSearchText, UpdateSourceTrigger=PropertyChanged}"
+                             TextChanged="StopSearchBox_OnTextChanged"
+                             Width="240" />
+                    <Border Background="#0F1E30" BorderBrush="#1F2F44" BorderThickness="1" CornerRadius="6" Margin="0 6 0 0">
+                        <ScrollViewer MaxHeight="220">
+                            <ListBox ItemsSource="{Binding StopResults}" SelectionChanged="StopResults_OnSelectionChanged"
+                                     Background="Transparent" BorderThickness="0" Foreground="White">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding Id}" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </ScrollViewer>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Margin="0 0 16 8" Width="220">
+                    <TextBlock Text="Vybraná zastávka" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
+                    <Border Background="#0F1E30" Padding="8" CornerRadius="6">
+                        <TextBlock Text="{Binding SelectedStopLabel}" />
+                    </Border>
                 </StackPanel>
 
                 <StackPanel Margin="0 0 16 8">

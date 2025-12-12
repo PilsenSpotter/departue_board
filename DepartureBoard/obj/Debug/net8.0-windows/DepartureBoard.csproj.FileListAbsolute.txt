@@ -17,3 +17,4 @@ C:\Users\olive\Desktop\departue board\DepartureBoard\obj\Debug\net8.0-windows\re
 C:\Users\olive\Desktop\departue board\DepartureBoard\obj\Debug\net8.0-windows\DepartureBoard.pdb
 C:\Users\olive\Desktop\departue board\DepartureBoard\obj\Debug\net8.0-windows\DepartureBoard.genruntimeconfig.cache
 C:\Users\olive\Desktop\departue board\DepartureBoard\obj\Debug\net8.0-windows\ref\DepartureBoard.dll
+C:\Users\olive\Desktop\departue board\DepartureBoard\obj\Debug\net8.0-windows\DepartureBoard.sourcelink.json
