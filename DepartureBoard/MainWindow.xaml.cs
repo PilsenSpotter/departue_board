@@ -120,14 +120,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        ApiKeyBox.Password = ApiKey;
         _ = RefreshDeparturesAsync();
         _timer.Start();
-    }
-
-    private void ApiKeyBox_OnPasswordChanged(object sender, RoutedEventArgs e)
-    {
-        ApiKey = ApiKeyBox.Password;
     }
 
     private async void RefreshButton_OnClick(object sender, RoutedEventArgs e)
@@ -306,5 +300,4 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }
-
 

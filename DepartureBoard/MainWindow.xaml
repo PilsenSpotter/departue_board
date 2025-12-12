@@ -68,9 +68,10 @@
                 </StackPanel>
 
                 <StackPanel Margin="0 0 16 8" Width="260">
-                    <TextBlock Text="API klíč (X-Access-Token)" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
-                    <PasswordBox x:Name="ApiKeyBox" PasswordChanged="ApiKeyBox_OnPasswordChanged" Width="250" />
-                    <TextBlock Text="Lze také nastavit env GOLEMIO_API_KEY." Foreground="{StaticResource MutedBrush}" FontSize="10" />
+                    <TextBlock Text="API klíč" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
+                    <Border Background="#0F1E30" Padding="8" CornerRadius="6">
+                        <TextBlock Text="Nastaven v kódu (Services/GolemioClient.EmbeddedApiKey)." TextWrapping="Wrap" />
+                    </Border>
                 </StackPanel>
 
                 <StackPanel Margin="0 0 16 8" VerticalAlignment="Bottom">
