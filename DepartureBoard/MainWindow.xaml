@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="PID Departure Board" Height="650" Width="1050"
+        Icon="icon.ico"
         Background="#0B1B2B"
         Loaded="OnLoaded">
     <Window.Resources>
