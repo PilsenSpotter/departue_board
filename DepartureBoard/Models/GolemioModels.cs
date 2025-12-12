@@ -36,6 +36,9 @@ public class Route
 {
     [JsonPropertyName("short_name")]
     public string? ShortName { get; set; }
+
+    [JsonPropertyName("type")]
+    public int? Type { get; set; }
 }
 
 public class Trip

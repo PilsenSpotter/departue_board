@@ -2,15 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using DepartureBoard.Models;
 using DepartureBoard.Services;
-using System.Threading;
 
 namespace DepartureBoard;
 
@@ -22,28 +22,20 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private CancellationTokenSource? _stopSearchCts;
     private bool _isLoading;
 
-    private string _stopId = string.Empty;
+    private readonly List<string> _selectedStopIds = new();
     private int _minutesAfter = 20;
     private int _refreshSeconds = 30;
     private string _apiKey = string.Empty;
     private string? _statusMessage;
     private string _stopSearchText = string.Empty;
-    private string _selectedStopName = string.Empty;
 
     public ObservableCollection<DepartureDisplay> Departures { get; } = new();
     public ObservableCollection<StopEntry> StopResults { get; } = new();
 
-    public string StopId
-    {
-        get => _stopId;
-        set
-        {
-            if (SetField(ref _stopId, value))
-            {
-                OnPropertyChanged(nameof(SelectedStopLabel));
-            }
-        }
-    }
+    public bool ShowBus { get; set; } = true;
+    public bool ShowTram { get; set; } = true;
+    public bool ShowMetro { get; set; } = true;
+    public bool ShowTrolley { get; set; } = true;
 
     public int MinutesAfter
     {
@@ -61,7 +53,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         set
         {
             if (value < 5) value = 5;
-            if (SetField(ref _refreshSeconds, value) && _timer != null)
+            if (SetField(ref _refreshSeconds, value))
             {
                 _timer.Interval = TimeSpan.FromSeconds(_refreshSeconds);
             }
@@ -85,22 +77,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         get => _stopSearchText;
         set => SetField(ref _stopSearchText, value);
     }
-
-    public string SelectedStopName
-    {
-        get => _selectedStopName;
-        set
-        {
-            if (SetField(ref _selectedStopName, value))
-            {
-                OnPropertyChanged(nameof(SelectedStopLabel));
-            }
-        }
-    }
-
-    public string SelectedStopLabel => string.IsNullOrWhiteSpace(StopId)
-        ? "Nevybrano"
-        : StopId;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -139,15 +115,23 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         try
         {
             _isLoading = true;
-            StatusMessage = "Načítám odjezdy...";
+
+            if (_selectedStopIds.Count == 0)
+            {
+                StatusMessage = "Vyber zastavku.";
+                return;
+            }
+
+            StatusMessage = "Nacitam odjezdy...";
 
             var departures = await _client.GetDeparturesAsync(
-                StopId.Trim(),
+                _selectedStopIds,
                 ApiKey,
                 MinutesAfter);
 
             var now = DateTimeOffset.Now;
             var mapped = departures
+                .Where(IsModeAllowed)
                 .Select(d => MapDeparture(d, now))
                 .Where(d => d is not null)
                 .Cast<DepartureDisplay>()
@@ -160,11 +144,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 Departures.Add(item);
             }
 
-            StatusMessage = $"Poslední aktualizace: {DateTime.Now:HH:mm:ss}, odjezdů: {Departures.Count}.";
+            StatusMessage = $"Posledni aktualizace: {DateTime.Now:HH:mm:ss}, odjezdu: {Departures.Count}.";
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Nepodařilo se načíst data: {ex.Message}";
+            StatusMessage = $"Nepodarilo se nacist data: {ex.Message}";
         }
         finally
         {
@@ -188,7 +172,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         else if (diff.TotalMinutes < 1)
         {
-            countdown = "za chvíli";
+            countdown = "za chvili";
         }
         else
         {
@@ -197,10 +181,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         return new DepartureDisplay
         {
-            Line = departure.Route?.ShortName ?? "—",
-            Destination = departure.Trip?.Headsign ?? "—",
+            Line = departure.Route?.ShortName ?? "-",
+            Destination = departure.Trip?.Headsign ?? "-",
             StopName = departure.Stop?.Name ?? string.Empty,
-            Platform = string.IsNullOrWhiteSpace(departure.Stop?.PlatformCode) ? "—" : departure.Stop!.PlatformCode!,
+            Platform = string.IsNullOrWhiteSpace(departure.Stop?.PlatformCode) ? "-" : departure.Stop!.PlatformCode!,
             DepartureTime = when.Value.ToLocalTime().ToString("HH:mm"),
             Countdown = countdown,
             Delay = GetDelayText(departure),
@@ -216,17 +200,31 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         if (predicted == null || scheduled == null)
         {
-            return "—";
+            return "-";
         }
 
         var delay = predicted.Value - scheduled.Value;
         if (Math.Abs(delay.TotalMinutes) < 0.5)
         {
-            return "včas";
+            return "vcas";
         }
 
         var sign = delay.TotalMinutes >= 0 ? "+" : "-";
         return $"{sign}{Math.Abs(delay.TotalMinutes):0} min";
+    }
+
+    private bool IsModeAllowed(Departure departure)
+    {
+        var type = departure.Route?.Type;
+        return type switch
+        {
+            0 => ShowTram,   // Tramvaj
+            1 => ShowMetro,  // Metro
+            2 => false,      // Vlak (skrýváme)
+            3 => ShowBus,    // Bus
+            11 => ShowTrolley, // Trolejbus
+            _ => true // neznámé -> zobrazit
+        };
     }
 
     private string GetAccessibilitySymbol(Departure departure)
@@ -256,7 +254,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         try
         {
-            StatusMessage = _stopLookup.IsLoaded ? "Hledám zastávky..." : "Stahuji seznam zastávek PID...";
+            StatusMessage = _stopLookup.IsLoaded ? "Hledam zastavky..." : "Stahuji seznam zastavek PID...";
             var results = await _stopLookup.SearchAsync(query, 25, cts.Token);
 
             StopResults.Clear();
@@ -266,16 +264,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             }
 
             StatusMessage = StopResults.Count == 0
-                ? "Žádná zastávka nenalezena."
-                : $"Vyber zastávku ({StopResults.Count} návrhů).";
+                ? "Zadna zastavka nenalezena."
+                : $"Vyber zastavku ({StopResults.Count} navrhu).";
         }
         catch (OperationCanceledException)
         {
-            // ignore
+            // ignored
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Vyhledání selhalo: {ex.Message}";
+            StatusMessage = $"Vyhledani selhalo: {ex.Message}";
         }
     }
 
@@ -286,9 +284,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
-        StopId = stop.Id;
-        SelectedStopName = stop.Name;
-                StopSearchText = stop.Id;
+        _selectedStopIds.Clear();
+        _selectedStopIds.AddRange(stop.StopIds);
+
+        StopSearchText = stop.Name;
         StopResults.Clear();
         lb.SelectedItem = null;
 
@@ -305,10 +304,5 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         field = value;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         return true;
-    }
-
-    private void OnPropertyChanged(string propertyName)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

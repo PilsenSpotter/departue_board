@@ -41,7 +41,7 @@
                                     <DataTemplate>
                                         <StackPanel>
                                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
-                                            <TextBlock Text="{Binding Id}" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
+                                            <TextBlock Text="{Binding DisplayIds}" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
@@ -58,6 +58,16 @@
                 <StackPanel Margin="0 0 16 8">
                     <TextBlock Text="Obnovit každých (s)" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
                     <TextBox Text="{Binding RefreshSeconds, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
+                </StackPanel>
+
+                <StackPanel Margin="0 0 16 8">
+                    <TextBlock Text="Filtr dopravy" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
+                    <WrapPanel>
+                        <CheckBox Content="Bus" IsChecked="{Binding ShowBus}" Foreground="White" Margin="0 0 8 0"/>
+                        <CheckBox Content="Tram" IsChecked="{Binding ShowTram}" Foreground="White" Margin="0 0 8 0"/>
+                        <CheckBox Content="Metro" IsChecked="{Binding ShowMetro}" Foreground="White" Margin="0 0 8 0"/>
+                        <CheckBox Content="Trol." IsChecked="{Binding ShowTrolley}" Foreground="White"/>
+                    </WrapPanel>
                 </StackPanel>
 
                 <StackPanel Margin="0 0 16 8" VerticalAlignment="Bottom">

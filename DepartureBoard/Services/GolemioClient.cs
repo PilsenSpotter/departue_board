@@ -27,17 +27,21 @@ public class GolemioClient
     }
 
     public async Task<IReadOnlyList<Departure>> GetDeparturesAsync(
-        string stopId,
+        IEnumerable<string> stopIds,
         string? apiKey = null,
         int minutesAfter = 20,
         int limit = 60,
         CancellationToken cancellationToken = default)
     {
-        stopId = stopId?.Trim() ?? string.Empty;
+        var ids = (stopIds ?? Array.Empty<string>())
+            .Select(id => id?.Trim() ?? string.Empty)
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
-        if (string.IsNullOrWhiteSpace(stopId))
+        if (ids.Count == 0)
         {
-            throw new ArgumentException("Zadej ID zastavky (napr. U215Z2P).", nameof(stopId));
+            throw new ArgumentException("Zadej alespon jedno stop_id (napr. U215Z2P).", nameof(stopIds));
         }
 
         var token = string.IsNullOrWhiteSpace(apiKey) ? ApiKey : apiKey;
@@ -70,7 +74,7 @@ public class GolemioClient
 
             foreach (var pattern in idPatterns)
             {
-                var idPart = string.Format(pattern, Uri.EscapeDataString(stopId));
+                var idPart = string.Join("&", ids.Select(id => string.Format(pattern, Uri.EscapeDataString(id))));
                 var uri =
                     $"{baseUrl}?{idPart}&minutesAfter={minutesAfter}&limit={limit}&preferredTimezone=Europe%2FPrague";
 
@@ -102,7 +106,7 @@ public class GolemioClient
 
         if (anyNotFound)
         {
-            throw new HttpRequestException($"Golemio API: zastavka '{stopId}' nebyla nalezena (zkus jinou platformu / P kod). Detaily: {string.Join(" | ", errors)}");
+            throw new HttpRequestException($"Golemio API: zadana zastavka nebyla nalezena (zkus jinou platformu / P kod). Detaily: {string.Join(" | ", errors)}");
         }
 
         throw new HttpRequestException($"Golemio API neuspesne ({string.Join(" | ", errors)})");

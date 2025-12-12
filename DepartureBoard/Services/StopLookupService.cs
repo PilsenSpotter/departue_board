@@ -1,10 +1,10 @@
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Text;
 using DepartureBoard.Models;
 using Microsoft.VisualBasic.FileIO;
-using System.Globalization;
 
 namespace DepartureBoard.Services;
 
@@ -44,9 +44,9 @@ public class StopLookupService
         var termKey = Normalize(term);
         var results = _stops
             .Where(s => s.SearchKey.Contains(termKey, StringComparison.OrdinalIgnoreCase)
-                        || s.Id.Contains(term, StringComparison.OrdinalIgnoreCase))
+                        || s.StopIds.Any(id => id.Contains(term, StringComparison.OrdinalIgnoreCase)))
             .OrderBy(s => s.Name)
-            .ThenBy(s => s.Id)
+            .ThenBy(s => s.StopIds.FirstOrDefault())
             .Take(limit)
             .ToList();
 
@@ -78,13 +78,15 @@ public class StopLookupService
         var header = parser.ReadFields() ?? Array.Empty<string>();
         var idxStopId = Array.IndexOf(header, "stop_id");
         var idxName = Array.IndexOf(header, "stop_name");
-        var idxPlatform = Array.IndexOf(header, "platform_code");
         var idxLocationType = Array.IndexOf(header, "location_type");
+        var idxParentStation = Array.IndexOf(header, "parent_station");
 
         if (idxStopId < 0 || idxName < 0)
         {
             throw new InvalidOperationException("Hlavička stops.txt neobsahuje stop_id/stop_name.");
         }
+
+        var byKey = new Dictionary<string, StopEntry>(StringComparer.OrdinalIgnoreCase);
 
         while (!parser.EndOfData)
         {
@@ -96,23 +98,42 @@ public class StopLookupService
             }
 
             var locationType = idxLocationType >= 0 && fields.Length > idxLocationType ? fields[idxLocationType] : string.Empty;
-            var platformCode = idxPlatform >= 0 && fields.Length > idxPlatform ? fields[idxPlatform] : null;
+            var parentStation = idxParentStation >= 0 && fields.Length > idxParentStation ? fields[idxParentStation] : string.Empty;
+            var stopId = fields[idxStopId];
+            var stopName = fields[idxName];
 
-            // Ponecháváme jen zastávkové body, ne parent stanice (location_type 1).
+            // Jen skutečné zastávkové body, ne parent stanice (location_type 1).
             if (!string.IsNullOrWhiteSpace(locationType) && locationType.Trim() == "1")
             {
                 continue;
             }
 
-            var stop = new StopEntry
-            {
-                Id = fields[idxStopId],
-                Name = fields[idxName],
-                PlatformCode = platformCode
-            };
-            stop.SearchKey = Normalize(stop.Name);
+            // Skupinu stavíme podle názvu zastávky, aby se spojily i různé parent_station (např. metro + povrch).
+            var key = Normalize(stopName);
 
-            _stops.Add(stop);
+            if (!byKey.TryGetValue(key, out var stop))
+            {
+                stop = new StopEntry
+                {
+                    Name = stopName,
+                    ParentId = string.IsNullOrWhiteSpace(parentStation) ? null : parentStation.Trim(),
+                    StopIds = new List<string>(),
+                    SourceNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                };
+                stop.SearchKey = Normalize(stop.Name);
+                byKey[key] = stop;
+                _stops.Add(stop);
+            }
+
+            if (!string.IsNullOrWhiteSpace(stopName))
+            {
+                stop.SourceNames.Add(stopName.Trim());
+            }
+
+            if (!stop.StopIds.Contains(stopId, StringComparer.OrdinalIgnoreCase))
+            {
+                stop.StopIds.Add(stopId);
+            }
         }
 
         IsLoaded = true;
