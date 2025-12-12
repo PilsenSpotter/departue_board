@@ -22,6 +22,12 @@ public class Departure
     [JsonPropertyName("departure_timestamp")]
     public DepartureTimestamp? DepartureTimestamp { get; set; }
 
+    [JsonPropertyName("wheelchair_accessible")]
+    public int? WheelchairAccessible { get; set; }
+
+    [JsonPropertyName("vehicle")]
+    public Vehicle? Vehicle { get; set; }
+
     [JsonPropertyName("delay")]
     public DelayInfo? Delay { get; set; }
 }
@@ -36,6 +42,10 @@ public class Trip
 {
     [JsonPropertyName("headsign")]
     public string? Headsign { get; set; }
+
+    // GTFS trip_wheelchair_accessible: 0 (unknown), 1 (accessible), 2 (not accessible)
+    [JsonPropertyName("wheelchair_accessible")]
+    public int? WheelchairAccessible { get; set; }
 }
 
 public class Stop
@@ -71,4 +81,13 @@ public class DelayInfo
 
     [JsonPropertyName("departure")]
     public int? Departure { get; set; }
+}
+
+public class Vehicle
+{
+    [JsonPropertyName("wheelchair_accessible")]
+    public bool? WheelchairAccessible { get; set; }
+
+    [JsonPropertyName("low_floor")]
+    public bool? LowFloor { get; set; }
 }

@@ -204,6 +204,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             DepartureTime = when.Value.ToLocalTime().ToString("HH:mm"),
             Countdown = countdown,
             Delay = GetDelayText(departure),
+            Accessibility = GetAccessibilitySymbol(departure),
             When = when.Value.ToLocalTime()
         };
     }
@@ -226,6 +227,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         var sign = delay.TotalMinutes >= 0 ? "+" : "-";
         return $"{sign}{Math.Abs(delay.TotalMinutes):0} min";
+    }
+
+    private string GetAccessibilitySymbol(Departure departure)
+    {
+        bool accessible =
+            (departure.Trip?.WheelchairAccessible ?? 0) == 1 ||
+            (departure.WheelchairAccessible ?? 0) == 1 ||
+            departure.Vehicle?.WheelchairAccessible == true ||
+            departure.Vehicle?.LowFloor == true;
+
+        return accessible ? "♿" : string.Empty;
     }
 
     private async void StopSearchBox_OnTextChanged(object sender, TextChangedEventArgs e)
@@ -300,4 +312,3 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }
-

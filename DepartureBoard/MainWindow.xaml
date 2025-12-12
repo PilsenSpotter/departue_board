@@ -22,7 +22,7 @@
 
         <StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0 0 0 6">
             <TextBlock Text="PID Departure Board" FontSize="28" FontWeight="Bold" Foreground="White"/>
-            <TextBlock Text="  ·  Golemio" FontSize="16" Foreground="{StaticResource MutedBrush}" Margin="6 10 0 0"/>
+            <TextBlock Text=" · Golemio" FontSize="16" Foreground="{StaticResource MutedBrush}" Margin="6 10 0 0"/>
         </StackPanel>
 
         <Border Grid.Row="1" Background="#112233" Padding="12" CornerRadius="8">
@@ -50,13 +50,6 @@
                     </Border>
                 </StackPanel>
 
-                <StackPanel Margin="0 0 16 8" Width="220">
-                    <TextBlock Text="Vybraná zastávka" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
-                    <Border Background="#0F1E30" Padding="8" CornerRadius="6">
-                        <TextBlock Text="{Binding SelectedStopLabel}" />
-                    </Border>
-                </StackPanel>
-
                 <StackPanel Margin="0 0 16 8">
                     <TextBlock Text="Minut dopředu" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
                     <TextBox Text="{Binding MinutesAfter, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
@@ -65,13 +58,6 @@
                 <StackPanel Margin="0 0 16 8">
                     <TextBlock Text="Obnovit každých (s)" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
                     <TextBox Text="{Binding RefreshSeconds, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
-                </StackPanel>
-
-                <StackPanel Margin="0 0 16 8" Width="260">
-                    <TextBlock Text="API klíč" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
-                    <Border Background="#0F1E30" Padding="8" CornerRadius="6">
-                        <TextBlock Text="Nastaven v kódu (Services/GolemioClient.EmbeddedApiKey)." TextWrapping="Wrap" />
-                    </Border>
                 </StackPanel>
 
                 <StackPanel Margin="0 0 16 8" VerticalAlignment="Bottom">
@@ -155,6 +141,14 @@
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding Delay}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <GridViewColumn Width="60" Header="Acc">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Accessibility}" HorizontalAlignment="Center" FontSize="14"/>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>

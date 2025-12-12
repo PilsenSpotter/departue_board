@@ -10,4 +10,5 @@ public class DepartureDisplay
     public string Countdown { get; set; } = string.Empty;
     public string Delay { get; set; } = string.Empty;
     public DateTimeOffset When { get; set; }
+    public string Accessibility { get; set; } = string.Empty;
 }

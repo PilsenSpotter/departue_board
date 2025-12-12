@@ -79,6 +79,7 @@ public class StopLookupService
         var idxStopId = Array.IndexOf(header, "stop_id");
         var idxName = Array.IndexOf(header, "stop_name");
         var idxPlatform = Array.IndexOf(header, "platform_code");
+        var idxLocationType = Array.IndexOf(header, "location_type");
 
         if (idxStopId < 0 || idxName < 0)
         {
@@ -94,11 +95,20 @@ public class StopLookupService
                 continue;
             }
 
+            var locationType = idxLocationType >= 0 && fields.Length > idxLocationType ? fields[idxLocationType] : string.Empty;
+            var platformCode = idxPlatform >= 0 && fields.Length > idxPlatform ? fields[idxPlatform] : null;
+
+            // Ponecháváme jen zastávkové body, ne parent stanice (location_type 1).
+            if (!string.IsNullOrWhiteSpace(locationType) && locationType.Trim() == "1")
+            {
+                continue;
+            }
+
             var stop = new StopEntry
             {
                 Id = fields[idxStopId],
                 Name = fields[idxName],
-                PlatformCode = idxPlatform >= 0 && fields.Length > idxPlatform ? fields[idxPlatform] : null
+                PlatformCode = platformCode
             };
             stop.SearchKey = Normalize(stop.Name);
 

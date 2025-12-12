@@ -60,6 +60,7 @@ public class GolemioClient
         };
 
         var errors = new List<string>();
+        bool anyNotFound = false;
 
         var stopTrying = false;
 
@@ -95,7 +96,13 @@ public class GolemioClient
                     stopTrying = true;
                     break;
                 }
+                anyNotFound = true;
             }
+        }
+
+        if (anyNotFound)
+        {
+            throw new HttpRequestException($"Golemio API: zastavka '{stopId}' nebyla nalezena (zkus jinou platformu / P kod). Detaily: {string.Join(" | ", errors)}");
         }
 
         throw new HttpRequestException($"Golemio API neuspesne ({string.Join(" | ", errors)})");
