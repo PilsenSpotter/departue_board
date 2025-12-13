@@ -1,0 +1,22 @@
+name: Notify Discord on changelog update
+
+on:
+  push:
+    paths:
+      - "changelog.md"
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord notification
+        env:
+          WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          REPO: ${{ github.repository }}
+          REF: ${{ github.ref_name }}
+          COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+        run: |
+          payload=$(jq -n \
+            --arg content "Changelog byl aktualizován v ${REPO} (${REF})\n${COMMIT_URL}" \
+            '{content: $content}')
+          curl -H "Content-Type: application/json" -d "$payload" "$WEBHOOK_URL"
