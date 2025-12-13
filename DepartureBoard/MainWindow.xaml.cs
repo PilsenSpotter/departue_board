@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -36,6 +36,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public bool ShowBus { get; set; } = true;
     public bool ShowTram { get; set; } = true;
     public bool ShowMetro { get; set; } = true;
+    public bool ShowTrain { get; set; } = true;
     public bool ShowTrolley { get; set; } = true;
 
     public bool ShowStopName => _selectedStopIds.Count > 1;
@@ -223,7 +224,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             0 => ShowTram,   // Tramvaj
             1 => ShowMetro,  // Metro
-            2 => false,      // Vlak (skrýváme)
+            2 => ShowTrain,  // Vlak
             3 => ShowBus,    // Bus
             11 => ShowTrolley, // Trolejbus
             _ => true // neznámé -> zobrazit
@@ -368,3 +369,4 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return string.Empty;
     }
 }
+

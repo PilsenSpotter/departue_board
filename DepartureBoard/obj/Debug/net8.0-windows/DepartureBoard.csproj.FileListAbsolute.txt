@@ -18,3 +18,23 @@ C:\Users\olive\Desktop\departue board\DepartureBoard\obj\Debug\net8.0-windows\De
 C:\Users\olive\Desktop\departue board\DepartureBoard\obj\Debug\net8.0-windows\DepartureBoard.genruntimeconfig.cache
 C:\Users\olive\Desktop\departue board\DepartureBoard\obj\Debug\net8.0-windows\ref\DepartureBoard.dll
 C:\Users\olive\Desktop\departue board\DepartureBoard\obj\Debug\net8.0-windows\DepartureBoard.sourcelink.json
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\bin\Debug\net8.0-windows\DepartureBoard.exe
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\bin\Debug\net8.0-windows\DepartureBoard.deps.json
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\bin\Debug\net8.0-windows\DepartureBoard.runtimeconfig.json
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\bin\Debug\net8.0-windows\DepartureBoard.dll
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\bin\Debug\net8.0-windows\DepartureBoard.pdb
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\MainWindow.baml
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\MainWindow.g.cs
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\App.g.cs
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\DepartureBoard_MarkupCompile.cache
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\DepartureBoard.g.resources
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\DepartureBoard.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\DepartureBoard.AssemblyInfoInputs.cache
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\DepartureBoard.AssemblyInfo.cs
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\DepartureBoard.csproj.CoreCompileInputs.cache
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\DepartureBoard.sourcelink.json
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\DepartureBoard.dll
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\refint\DepartureBoard.dll
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\DepartureBoard.pdb
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\DepartureBoard.genruntimeconfig.cache
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\ref\DepartureBoard.dll

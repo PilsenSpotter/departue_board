@@ -91,6 +91,7 @@
                         <CheckBox Content="Bus" IsChecked="{Binding ShowBus}" Foreground="White" Margin="0 0 8 0"/>
                         <CheckBox Content="Tram" IsChecked="{Binding ShowTram}" Foreground="White" Margin="0 0 8 0"/>
                         <CheckBox Content="Metro" IsChecked="{Binding ShowMetro}" Foreground="White" Margin="0 0 8 0"/>
+                        <CheckBox Content="Vlak" IsChecked="{Binding ShowTrain}" Foreground="White" Margin="0 0 8 0"/>
                         <CheckBox Content="Trol." IsChecked="{Binding ShowTrolley}" Foreground="White"/>
                     </WrapPanel>
                 </StackPanel>
