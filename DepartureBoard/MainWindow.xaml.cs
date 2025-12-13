@@ -21,6 +21,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly DispatcherTimer _timer;
     private CancellationTokenSource? _stopSearchCts;
     private bool _isLoading;
+    private bool _pendingFilterRefresh;
 
     private readonly List<string> _selectedStopIds = new();
     private int _minutesAfter = 20;
@@ -28,16 +29,75 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _apiKey = string.Empty;
     private string? _statusMessage;
     private string _stopSearchText = string.Empty;
+    private bool _showBus = true;
+    private bool _showTram = true;
+    private bool _showMetro = true;
+    private bool _showTrain = true;
+    private bool _showTrolley = true;
 
     public ObservableCollection<DepartureDisplay> Departures { get; } = new();
     public ObservableCollection<StopEntry> StopResults { get; } = new();
     public ObservableCollection<StopEntry> SelectedStops { get; } = new();
 
-    public bool ShowBus { get; set; } = true;
-    public bool ShowTram { get; set; } = true;
-    public bool ShowMetro { get; set; } = true;
-    public bool ShowTrain { get; set; } = true;
-    public bool ShowTrolley { get; set; } = true;
+    public bool ShowBus
+    {
+        get => _showBus;
+        set
+        {
+            if (SetField(ref _showBus, value))
+            {
+                TriggerFilterRefresh();
+            }
+        }
+    }
+
+    public bool ShowTram
+    {
+        get => _showTram;
+        set
+        {
+            if (SetField(ref _showTram, value))
+            {
+                TriggerFilterRefresh();
+            }
+        }
+    }
+
+    public bool ShowMetro
+    {
+        get => _showMetro;
+        set
+        {
+            if (SetField(ref _showMetro, value))
+            {
+                TriggerFilterRefresh();
+            }
+        }
+    }
+
+    public bool ShowTrain
+    {
+        get => _showTrain;
+        set
+        {
+            if (SetField(ref _showTrain, value))
+            {
+                TriggerFilterRefresh();
+            }
+        }
+    }
+
+    public bool ShowTrolley
+    {
+        get => _showTrolley;
+        set
+        {
+            if (SetField(ref _showTrolley, value))
+            {
+                TriggerFilterRefresh();
+            }
+        }
+    }
 
     public bool ShowStopName => _selectedStopIds.Count > 1;
 
@@ -113,13 +173,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         if (_isLoading)
         {
+            _pendingFilterRefresh = true;
             return;
         }
 
+        _isLoading = true;
+        _pendingFilterRefresh = false;
+
         try
         {
-            _isLoading = true;
-
             if (_selectedStopIds.Count == 0)
             {
                 StatusMessage = "Vyber zastavku.";
@@ -157,6 +219,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         finally
         {
             _isLoading = false;
+            if (_pendingFilterRefresh)
+            {
+                _pendingFilterRefresh = false;
+                await RefreshDeparturesAsync();
+            }
         }
     }
 
@@ -368,5 +435,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         return string.Empty;
     }
-}
 
+    private void TriggerFilterRefresh()
+    {
+        _pendingFilterRefresh = true;
+        _ = RefreshDeparturesAsync();
+    }
+}
