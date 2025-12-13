@@ -35,6 +35,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _showTrain = true;
     private bool _showTrolley = true;
     private bool _hasPlatformFilters;
+    private AccessibilityFilter _accessibilityFilter = AccessibilityFilter.All;
 
     public ObservableCollection<DepartureDisplay> Departures { get; } = new();
     public ObservableCollection<StopEntry> StopResults { get; } = new();
@@ -102,6 +103,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     public bool ShowStopName => _selectedStopIds.Count > 1;
+    public AccessibilityFilter AccessibilityFilter
+    {
+        get => _accessibilityFilter;
+        set
+        {
+            if (SetField(ref _accessibilityFilter, value))
+            {
+                TriggerFilterRefresh();
+            }
+        }
+    }
     public bool HasPlatformFilters
     {
         get => _hasPlatformFilters;
@@ -212,7 +224,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            var vehicleTypes = tripIds.Count == 0
+            var vehicleInfos = tripIds.Count == 0
                 ? (IReadOnlyDictionary<string, VehiclePositionInfo>)new Dictionary<string, VehiclePositionInfo>(StringComparer.OrdinalIgnoreCase)
                 : await _client.GetVehicleInfoByTripAsync(tripIds, cancellationToken: CancellationToken.None);
 
@@ -220,7 +232,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             var mapped = departures
                 .Where(IsModeAllowed)
                 .Where(IsPlatformAllowed)
-                .Select(d => MapDeparture(d, now, vehicleTypes))
+                .Where(d => IsAccessibilityAllowed(d, vehicleInfos))
+                .Select(d => MapDeparture(d, now, vehicleInfos))
                 .Where(d => d is not null)
                 .Cast<DepartureDisplay>()
                 .OrderBy(d => d.When)
@@ -249,7 +262,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
-    private DepartureDisplay? MapDeparture(Departure departure, DateTimeOffset now, IReadOnlyDictionary<string, VehiclePositionInfo> vehicleTypes)
+    private DepartureDisplay? MapDeparture(Departure departure, DateTimeOffset now, IReadOnlyDictionary<string, VehiclePositionInfo> vehicleInfos)
     {
         var when = departure.DepartureTimestamp?.Effective;
         if (when == null)
@@ -281,8 +294,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             DepartureTime = when.Value.ToLocalTime().ToString("HH:mm"),
             Countdown = countdown,
             Delay = GetDelayText(departure),
-            Accessibility = GetAccessibilitySymbol(departure, vehicleTypes),
-            VehicleType = ResolveVehicleType(departure, vehicleTypes),
+            Accessibility = GetAccessibilitySymbol(departure, vehicleInfos),
+            VehicleType = ResolveVehicleType(departure, vehicleInfos),
             When = when.Value.ToLocalTime()
         };
     }
@@ -395,9 +408,20 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
-    private string ResolveVehicleType(Departure departure, IReadOnlyDictionary<string, VehiclePositionInfo> vehicleTypes)
+    private bool IsAccessibilityAllowed(Departure departure, IReadOnlyDictionary<string, VehiclePositionInfo> vehicleInfos)
     {
-        if (vehicleTypes.Count == 0)
+        var accessible = IsAccessible(departure, vehicleInfos);
+        return AccessibilityFilter switch
+        {
+            AccessibilityFilter.AccessibleOnly => accessible,
+            AccessibilityFilter.HighFloorOnly => !accessible,
+            _ => true
+        };
+    }
+
+    private string ResolveVehicleType(Departure departure, IReadOnlyDictionary<string, VehiclePositionInfo> vehicleInfos)
+    {
+        if (vehicleInfos.Count == 0)
         {
             return ResolveRouteTypeName(departure);
         }
@@ -408,7 +432,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return ResolveRouteTypeName(departure);
         }
 
-        if (vehicleTypes.TryGetValue(tripId, out var info))
+        if (vehicleInfos.TryGetValue(tripId, out var info))
         {
             if (!string.IsNullOrWhiteSpace(info?.DisplayName))
             {
@@ -434,16 +458,22 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private string GetAccessibilitySymbol(Departure departure, IReadOnlyDictionary<string, VehiclePositionInfo> vehicleInfos)
     {
+        var accessible = IsAccessible(departure, vehicleInfos);
+        return accessible ? "♿" : string.Empty;
+    }
+
+    private bool IsAccessible(Departure departure, IReadOnlyDictionary<string, VehiclePositionInfo> vehicleInfos)
+    {
         if (departure.Trip?.Id is string tripId &&
             vehicleInfos.TryGetValue(tripId, out var info) &&
             info?.WheelchairAccessible is bool vwFromVehicle)
         {
-            return vwFromVehicle ? "♿" : string.Empty;
+            return vwFromVehicle;
         }
 
         if (departure.Trip?.IsWheelchairAccessible is bool vwTrip)
         {
-            return vwTrip ? "♿" : string.Empty;
+            return vwTrip;
         }
 
         bool accessible =
@@ -452,7 +482,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             departure.Vehicle?.WheelchairAccessible == true ||
             departure.Vehicle?.LowFloor == true;
 
-        return accessible ? "♿" : string.Empty;
+        return accessible;
     }
 private string GetAccessibilitySymbol(Departure departure)
     {
@@ -597,4 +627,11 @@ private string GetAccessibilitySymbol(Departure departure)
         _pendingFilterRefresh = true;
         _ = RefreshDeparturesAsync();
     }
+}
+
+public enum AccessibilityFilter
+{
+    All,
+    AccessibleOnly,
+    HighFloorOnly
 }

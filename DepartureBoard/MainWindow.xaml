@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DepartureBoard"
         mc:Ignorable="d"
         Title="PID Departure Board" Height="650" Width="1050"
         Icon="icon.ico"
@@ -94,6 +95,17 @@
                         <CheckBox Content="Vlak" IsChecked="{Binding ShowTrain, UpdateSourceTrigger=PropertyChanged}" Foreground="White" Margin="0 0 8 0"/>
                         <CheckBox Content="Trol." IsChecked="{Binding ShowTrolley, UpdateSourceTrigger=PropertyChanged}" Foreground="White"/>
                     </WrapPanel>
+                </StackPanel>
+
+                <StackPanel Margin="0 0 16 8">
+                    <TextBlock Text="Přístupnost" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
+                    <ComboBox SelectedValuePath="Tag"
+                              SelectedValue="{Binding AccessibilityFilter, UpdateSourceTrigger=PropertyChanged}"
+                              Width="180">
+                        <ComboBoxItem Content="Vše" Tag="{x:Static local:AccessibilityFilter.All}"/>
+                        <ComboBoxItem Content="Jen bezbariérové" Tag="{x:Static local:AccessibilityFilter.AccessibleOnly}"/>
+                        <ComboBoxItem Content="Jen vysokopodlažní" Tag="{x:Static local:AccessibilityFilter.HighFloorOnly}"/>
+                    </ComboBox>
                 </StackPanel>
 
                 <StackPanel Margin="0 0 16 8" Visibility="{Binding HasPlatformFilters, Converter={StaticResource BoolToVisibility}}">
