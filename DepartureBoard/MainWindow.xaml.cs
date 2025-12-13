@@ -295,7 +295,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Countdown = countdown,
             Delay = GetDelayText(departure),
             Accessibility = GetAccessibilitySymbol(departure, vehicleInfos),
-            VehicleType = ResolveVehicleType(departure, vehicleInfos),
+            VehicleType = ResolveVehicleLabel(departure, vehicleInfos),
             When = when.Value.ToLocalTime()
         };
     }
@@ -419,28 +419,28 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         };
     }
 
-    private string ResolveVehicleType(Departure departure, IReadOnlyDictionary<string, VehiclePositionInfo> vehicleInfos)
+    private string ResolveVehicleLabel(Departure departure, IReadOnlyDictionary<string, VehiclePositionInfo> vehicleInfos)
     {
         if (vehicleInfos.Count == 0)
         {
-            return ResolveRouteTypeName(departure);
+            return ComposeVehicleLabel(departure, ResolveRouteTypeName(departure));
         }
 
         var tripId = departure.Trip?.Id;
         if (string.IsNullOrWhiteSpace(tripId))
         {
-            return ResolveRouteTypeName(departure);
+            return ComposeVehicleLabel(departure, ResolveRouteTypeName(departure));
         }
 
         if (vehicleInfos.TryGetValue(tripId, out var info))
         {
             if (!string.IsNullOrWhiteSpace(info?.DisplayName))
             {
-                return info.DisplayName!;
+                return ComposeVehicleLabel(departure, info.DisplayName!);
             }
         }
 
-        return ResolveRouteTypeName(departure);
+        return ComposeVehicleLabel(departure, ResolveRouteTypeName(departure));
     }
 
     private static string ResolveRouteTypeName(Departure departure)
@@ -452,6 +452,35 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             2 => "vlak",
             3 => "bus",
             11 => "trolejbus",
+            _ => string.Empty
+        };
+    }
+
+    private string ComposeVehicleLabel(Departure departure, string name)
+    {
+        var emoji = ResolveVehicleEmoji(departure);
+        if (string.IsNullOrWhiteSpace(emoji))
+        {
+            return name;
+        }
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return emoji;
+        }
+
+        return $"{emoji} {name}";
+    }
+
+    private static string ResolveVehicleEmoji(Departure departure)
+    {
+        return departure.Route?.Type switch
+        {
+            0 => "🚊",
+            1 => "🚇",
+            2 => "🚆",
+            3 => "🚍",
+            11 => "🚎",
             _ => string.Empty
         };
     }

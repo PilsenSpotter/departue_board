@@ -13,6 +13,10 @@
         <SolidColorBrush x:Key="AccentBrush" Color="#55D6BE" />
         <SolidColorBrush x:Key="MutedBrush" Color="#9BB1C8" />
         <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+        <LinearGradientBrush x:Key="HeaderBrush" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#12324F" Offset="0"/>
+            <GradientStop Color="#0E2238" Offset="1"/>
+        </LinearGradientBrush>
     </Window.Resources>
 
     <Grid Margin="16">
@@ -23,10 +27,12 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0 0 0 6">
-            <TextBlock Text="PID Departure Board" FontSize="28" FontWeight="Bold" Foreground="White"/>
-            <TextBlock Text="Pracovní verze 0.0.1.5" FontSize="14" Foreground="{StaticResource MutedBrush}" Margin="12 8 0 0"/>
-        </StackPanel>
+        <Border Grid.Row="0" Background="{StaticResource HeaderBrush}" Padding="12" CornerRadius="10" Margin="0 0 0 6">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="PID Departure Board" FontSize="28" FontWeight="Bold" Foreground="White"/>
+                <TextBlock Text="Pracovní verze 0.0.1.5" FontSize="14" Foreground="{StaticResource MutedBrush}" Margin="12 8 0 0"/>
+            </StackPanel>
+        </Border>
 
         <Border Grid.Row="1" Background="#112233" Padding="12" CornerRadius="8">
             <WrapPanel ItemWidth="260" MinWidth="220" VerticalAlignment="Center" Margin="0" >
@@ -37,43 +43,48 @@
                              TextChanged="StopSearchBox_OnTextChanged"
                              Width="240" />
                     <Border Background="#0F1E30" BorderBrush="#1F2F44" BorderThickness="1" CornerRadius="6" Margin="0 6 0 0">
-                        <ScrollViewer MaxHeight="220">
-                            <ListBox ItemsSource="{Binding StopResults}" SelectionChanged="StopResults_OnSelectionChanged"
-                                     Background="Transparent" BorderThickness="0" Foreground="White">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel>
-                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
-                                            <TextBlock Text="{Binding DisplayIds}" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                        </ScrollViewer>
+                        <ListBox ItemsSource="{Binding StopResults}" SelectionChanged="StopResults_OnSelectionChanged"
+                                 Background="Transparent" BorderThickness="0" Foreground="White"
+                                 MaxHeight="220"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding DisplayIds}" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
                     </Border>
                     <StackPanel Margin="0 6 0 0">
                         <TextBlock Text="Vybrane zastavky" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
-                        <ItemsControl ItemsSource="{Binding SelectedStops}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Background="#1A2C44" CornerRadius="6" Padding="6" Margin="0 4 8 4" BorderBrush="#233A4F" BorderThickness="1">
-                                        <StackPanel>
-                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Margin="0 0 6 0"/>
-                                                <Button Content="x" Width="22" Height="22" Padding="0" Click="RemoveSelectedStop_OnClick"
-                                                        Tag="{Binding}" ToolTip="Odebrat zastavku"/>
-                                            </StackPanel>
-                                            <TextBlock Text="{Binding DisplayIds}" FontSize="11" Foreground="{StaticResource MutedBrush}"/>
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                        <Border Background="#0F1E30" BorderBrush="#1F2F44" BorderThickness="1" CornerRadius="6">
+                            <ScrollViewer MaxHeight="180">
+                                <ItemsControl ItemsSource="{Binding SelectedStops}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#1A2C44" CornerRadius="6" Padding="6" Margin="4" BorderBrush="#233A4F" BorderThickness="1">
+                                                <StackPanel>
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Margin="0 0 6 0"/>
+                                                        <Button Content="x" Width="22" Height="22" Padding="0" Click="RemoveSelectedStop_OnClick"
+                                                                Tag="{Binding}" ToolTip="Odebrat zastavku"/>
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding DisplayIds}" FontSize="11" Foreground="{StaticResource MutedBrush}"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Border>
                     </StackPanel>
                 </StackPanel>
 
@@ -90,11 +101,11 @@
                 <StackPanel Margin="0 0 16 8">
                     <TextBlock Text="Filtr dopravy" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
                     <WrapPanel>
-                        <CheckBox Content="Bus" IsChecked="{Binding ShowBus, UpdateSourceTrigger=PropertyChanged}" Foreground="White" Margin="0 0 8 0"/>
-                        <CheckBox Content="Tram" IsChecked="{Binding ShowTram, UpdateSourceTrigger=PropertyChanged}" Foreground="White" Margin="0 0 8 0"/>
-                        <CheckBox Content="Metro" IsChecked="{Binding ShowMetro, UpdateSourceTrigger=PropertyChanged}" Foreground="White" Margin="0 0 8 0"/>
-                        <CheckBox Content="Vlak" IsChecked="{Binding ShowTrain, UpdateSourceTrigger=PropertyChanged}" Foreground="White" Margin="0 0 8 0"/>
-                        <CheckBox Content="Trol." IsChecked="{Binding ShowTrolley, UpdateSourceTrigger=PropertyChanged}" Foreground="White"/>
+                        <CheckBox Content="🚍 Bus" IsChecked="{Binding ShowBus, UpdateSourceTrigger=PropertyChanged}" Foreground="White" Margin="0 0 8 0"/>
+                        <CheckBox Content="🚊 Tram" IsChecked="{Binding ShowTram, UpdateSourceTrigger=PropertyChanged}" Foreground="White" Margin="0 0 8 0"/>
+                        <CheckBox Content="🚇 Metro" IsChecked="{Binding ShowMetro, UpdateSourceTrigger=PropertyChanged}" Foreground="White" Margin="0 0 8 0"/>
+                        <CheckBox Content="🚆 Vlak" IsChecked="{Binding ShowTrain, UpdateSourceTrigger=PropertyChanged}" Foreground="White" Margin="0 0 8 0"/>
+                        <CheckBox Content="🚎 Trol." IsChecked="{Binding ShowTrolley, UpdateSourceTrigger=PropertyChanged}" Foreground="White"/>
                     </WrapPanel>
                 </StackPanel>
 
@@ -103,9 +114,9 @@
                     <ComboBox SelectedValuePath="Tag"
                               SelectedValue="{Binding AccessibilityFilter, UpdateSourceTrigger=PropertyChanged}"
                               Width="180">
-                        <ComboBoxItem Content="Vše" Tag="{x:Static local:AccessibilityFilter.All}"/>
-                        <ComboBoxItem Content="Jen bezbariérové" Tag="{x:Static local:AccessibilityFilter.AccessibleOnly}"/>
-                        <ComboBoxItem Content="Jen vysokopodlažní" Tag="{x:Static local:AccessibilityFilter.HighFloorOnly}"/>
+                        <ComboBoxItem Content="🌐 Vše" Tag="{x:Static local:AccessibilityFilter.All}"/>
+                        <ComboBoxItem Content="♿ Jen bezbariérové" Tag="{x:Static local:AccessibilityFilter.AccessibleOnly}"/>
+                        <ComboBoxItem Content="⛔ Jen vysokopodlažní" Tag="{x:Static local:AccessibilityFilter.HighFloorOnly}"/>
                     </ComboBox>
                 </StackPanel>
 
@@ -223,7 +234,7 @@
                         <GridViewColumn Width="60" Header="Acc">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Accessibility}" HorizontalAlignment="Center" FontSize="14"/>
+                                    <TextBlock Text="{Binding Accessibility}" HorizontalAlignment="Center" FontSize="16" Foreground="{StaticResource AccentBrush}"/>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
