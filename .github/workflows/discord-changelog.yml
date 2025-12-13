@@ -17,6 +17,6 @@ jobs:
           COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
         run: |
           payload=$(jq -n \
-            --arg content "Changelog byl aktualizován v ${REPO} (${REF})\n${COMMIT_URL}" \
+            --arg content "# AKTUÁLNÍ INFORMACE Z VÝVOJE! @Pilsner Spotter" \
             '{content: $content}')
           curl -H "Content-Type: application/json" -d "$payload" "$WEBHOOK_URL"
