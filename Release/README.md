@@ -1,4 +1,6 @@
 # PID Departure Board (WPF, .NET 8)
+Autor/claim: Oliver Bocko
+
 
 Jednoduchá desktopová tabule odjezdů pro PID (Golemio API).
 

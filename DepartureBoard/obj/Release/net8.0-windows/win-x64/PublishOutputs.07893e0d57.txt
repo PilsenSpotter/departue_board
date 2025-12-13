@@ -1,0 +1,5 @@
+C:\Users\olive\Desktop\departue board\Release\publish\DepartureBoard.exe
+C:\Users\olive\Desktop\departue board\Release\publish\DepartureBoard.dll
+C:\Users\olive\Desktop\departue board\Release\publish\DepartureBoard.deps.json
+C:\Users\olive\Desktop\departue board\Release\publish\DepartureBoard.runtimeconfig.json
+C:\Users\olive\Desktop\departue board\Release\publish\DepartureBoard.pdb

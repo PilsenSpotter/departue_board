@@ -199,6 +199,13 @@
             </ListView>
         </Border>
 
-        <TextBlock Grid.Row="3" Text="{Binding StatusMessage}" Foreground="{StaticResource MutedBrush}" Margin="4 0 0 0"/>
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource MutedBrush}" Margin="4 0 0 0" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1" Text="Created by Oliver Bocko" Foreground="{StaticResource MutedBrush}" Margin="0 0 4 0" VerticalAlignment="Center"/>
+        </Grid>
     </Grid>
 </Window>
