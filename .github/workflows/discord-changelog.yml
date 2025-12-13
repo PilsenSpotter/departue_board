@@ -9,14 +9,29 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Prepare changelog diff
+        id: diff
+        run: |
+          DIFF=$(git diff --unified=3 HEAD~1 HEAD -- changelog.md || true)
+          TRUNCATED=$(printf "%s" "$DIFF" | head -c 1800)
+          if [ -z "$TRUNCATED" ]; then
+            TRUNCATED="(žádný diff changelog.md nebyl nalezen)"
+          fi
+          SAFE=$(printf "%s" "$TRUNCATED" | jq -Rsa .)
+          echo "diff=$SAFE" >> "$GITHUB_OUTPUT"
+
       - name: Send Discord notification
         env:
           WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           REPO: ${{ github.repository }}
           REF: ${{ github.ref_name }}
           COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+          DIFF_TEXT: ${{ steps.diff.outputs.diff }}
         run: |
           payload=$(jq -n \
-            --arg content "# AKTUÁLNÍ INFORMACE Z VÝVOJE! @Pilsner Spotter" \
+            --arg content "Changelog byl aktualizován v ${REPO} (${REF})\n${COMMIT_URL}\n\n\`\`\`diff\n${DIFF_TEXT}\n\`\`\`" \
             '{content: $content}')
           curl -H "Content-Type: application/json" -d "$payload" "$WEBHOOK_URL"
