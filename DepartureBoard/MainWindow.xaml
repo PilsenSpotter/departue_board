@@ -30,7 +30,7 @@
         <Border Grid.Row="0" Background="{StaticResource HeaderBrush}" Padding="12" CornerRadius="10" Margin="0 0 0 6">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="PID Departure Board" FontSize="28" FontWeight="Bold" Foreground="White"/>
-                <TextBlock Text="Pracovní verze 0.0.1.5" FontSize="14" Foreground="{StaticResource MutedBrush}" Margin="12 8 0 0"/>
+                <TextBlock Text="Pracovní verze 0.0.1.6" FontSize="14" Foreground="{StaticResource MutedBrush}" Margin="12 8 0 0"/>
             </StackPanel>
         </Border>
 
