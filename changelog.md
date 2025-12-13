@@ -2,7 +2,7 @@
 
 ## TEST PUSH
 
-- TST
+- TSTa
 
 ## Unreleased
 - Jemné doladění barev (Win11-like) a redesign tabulky odjezdů (rounded karty, nové hover/alternace).
