@@ -96,6 +96,25 @@
                     </WrapPanel>
                 </StackPanel>
 
+                <StackPanel Margin="0 0 16 8" Visibility="{Binding HasPlatformFilters, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="Stanoviště (MHD)" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
+                    <ItemsControl ItemsSource="{Binding Platforms}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox Content="{Binding Name}"
+                                          IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          Foreground="White"
+                                          Margin="0 0 8 8"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
                 <StackPanel Margin="0 0 16 8" VerticalAlignment="Bottom">
                     <Button Content="Načíst odjezdy" Padding="12 6" Width="140" Click="RefreshButton_OnClick" />
                 </StackPanel>

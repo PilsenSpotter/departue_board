@@ -34,10 +34,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _showMetro = true;
     private bool _showTrain = true;
     private bool _showTrolley = true;
+    private bool _hasPlatformFilters;
 
     public ObservableCollection<DepartureDisplay> Departures { get; } = new();
     public ObservableCollection<StopEntry> StopResults { get; } = new();
     public ObservableCollection<StopEntry> SelectedStops { get; } = new();
+    public ObservableCollection<PlatformFilter> Platforms { get; } = new();
 
     public bool ShowBus
     {
@@ -100,6 +102,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     public bool ShowStopName => _selectedStopIds.Count > 1;
+    public bool HasPlatformFilters
+    {
+        get => _hasPlatformFilters;
+        private set => SetField(ref _hasPlatformFilters, value);
+    }
 
     public int MinutesAfter
     {
@@ -185,6 +192,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (_selectedStopIds.Count == 0)
             {
                 StatusMessage = "Vyber zastavku.";
+                ClearPlatformFilters();
                 return;
             }
 
@@ -195,9 +203,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 ApiKey,
                 MinutesAfter);
 
+            UpdatePlatformFilters(departures);
+
             var now = DateTimeOffset.Now;
             var mapped = departures
                 .Where(IsModeAllowed)
+                .Where(IsPlatformAllowed)
                 .Select(d => MapDeparture(d, now))
                 .Where(d => d is not null)
                 .Cast<DepartureDisplay>()
@@ -284,6 +295,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return $"{sign}{Math.Abs(delay.TotalMinutes):0} min";
     }
 
+    private static bool IsMhdMode(Departure departure)
+    {
+        return departure.Route?.Type is 0 or 1 or 3 or 11;
+    }
+
     private bool IsModeAllowed(Departure departure)
     {
         var type = departure.Route?.Type;
@@ -294,8 +310,77 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             2 => ShowTrain,  // Vlak
             3 => ShowBus,    // Bus
             11 => ShowTrolley, // Trolejbus
-            _ => true // neznámé -> zobrazit
+            _ => true // neznamy -> zobrazit
         };
+    }
+
+    private bool IsPlatformAllowed(Departure departure)
+    {
+        if (!IsMhdMode(departure))
+        {
+            return true;
+        }
+
+        var platform = departure.Stop?.PlatformCode;
+        if (string.IsNullOrWhiteSpace(platform))
+        {
+            return true;
+        }
+
+        if (!HasPlatformFilters)
+        {
+            return true;
+        }
+
+        var allowed = Platforms.Where(p => p.IsSelected).Select(p => p.Name);
+        return allowed.Contains(platform, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private void UpdatePlatformFilters(IEnumerable<Departure> departures)
+    {
+        var platforms = departures
+            .Where(IsMhdMode)
+            .Select(d => d.Stop?.PlatformCode?.Trim() ?? string.Empty)
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(p => p)
+            .ToList();
+
+        var previousSelection = Platforms.ToDictionary(p => p.Name, p => p.IsSelected, StringComparer.OrdinalIgnoreCase);
+
+        ClearPlatformFilters();
+
+        foreach (var platformName in platforms)
+        {
+            var filter = new PlatformFilter
+            {
+                Name = platformName,
+                IsSelected = previousSelection.TryGetValue(platformName, out var isSelected) ? isSelected : true
+            };
+            filter.PropertyChanged += PlatformFilterOnPropertyChanged;
+            Platforms.Add(filter);
+        }
+
+        HasPlatformFilters = Platforms.Count > 0;
+    }
+
+    private void ClearPlatformFilters()
+    {
+        foreach (var platform in Platforms)
+        {
+            platform.PropertyChanged -= PlatformFilterOnPropertyChanged;
+        }
+
+        Platforms.Clear();
+        HasPlatformFilters = false;
+    }
+
+    private void PlatformFilterOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(PlatformFilter.IsSelected))
+        {
+            TriggerFilterRefresh();
+        }
     }
 
     private string GetAccessibilitySymbol(Departure departure)
