@@ -4,6 +4,10 @@ Autor/claim: Oliver Bocko
 
 Jednoduchá desktopová tabule odjezdů pro PID (Golemio API).
 
+## AKTUÁLNÍ PRACOVNÍ VERZE
+
+https://github.com/PilsenSpotter/departue_board/releases/tag/0.0.1
+
 ## Funkce
 - Vyhledávání zastávky (GTFS stop_id) s fltrováním z GTFS stops.txt.
 - Načtení odjezdů přes Golemio `departureboards` (PID) včetně zpoždění a informací o přístupnosti (pokud je API poskytne).
