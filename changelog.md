@@ -1,5 +1,9 @@
 # Changelog
 
+## TEST PUSH
+
+- TST
+
 ## Unreleased
 - Jemné doladění barev (Win11-like) a redesign tabulky odjezdů (rounded karty, nové hover/alternace).
 - Scrollování přímo v seznamu vybraných zastávek i ve výsledcích vyhledávání kolečkem/touchpadem.
