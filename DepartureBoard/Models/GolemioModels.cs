@@ -43,6 +43,12 @@ public class Route
 
 public class Trip
 {
+    [JsonPropertyName("is_wheelchair_accessible")]
+    public bool? IsWheelchairAccessible { get; set; }
+
+    [JsonPropertyName("id")]
+    public string? Id { get; set; }
+
     [JsonPropertyName("headsign")]
     public string? Headsign { get; set; }
 

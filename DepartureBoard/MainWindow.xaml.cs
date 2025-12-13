@@ -205,11 +205,22 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             UpdatePlatformFilters(departures);
 
+            var tripIds = departures
+                .Select(d => d.Trip?.Id)
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Select(id => id!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var vehicleTypes = tripIds.Count == 0
+                ? (IReadOnlyDictionary<string, VehiclePositionInfo>)new Dictionary<string, VehiclePositionInfo>(StringComparer.OrdinalIgnoreCase)
+                : await _client.GetVehicleInfoByTripAsync(tripIds, cancellationToken: CancellationToken.None);
+
             var now = DateTimeOffset.Now;
             var mapped = departures
                 .Where(IsModeAllowed)
                 .Where(IsPlatformAllowed)
-                .Select(d => MapDeparture(d, now))
+                .Select(d => MapDeparture(d, now, vehicleTypes))
                 .Where(d => d is not null)
                 .Cast<DepartureDisplay>()
                 .OrderBy(d => d.When)
@@ -238,7 +249,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
-    private DepartureDisplay? MapDeparture(Departure departure, DateTimeOffset now)
+    private DepartureDisplay? MapDeparture(Departure departure, DateTimeOffset now, IReadOnlyDictionary<string, VehiclePositionInfo> vehicleTypes)
     {
         var when = departure.DepartureTimestamp?.Effective;
         if (when == null)
@@ -270,7 +281,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             DepartureTime = when.Value.ToLocalTime().ToString("HH:mm"),
             Countdown = countdown,
             Delay = GetDelayText(departure),
-            Accessibility = GetAccessibilitySymbol(departure),
+            Accessibility = GetAccessibilitySymbol(departure, vehicleTypes),
+            VehicleType = ResolveVehicleType(departure, vehicleTypes),
             When = when.Value.ToLocalTime()
         };
     }
@@ -383,7 +395,66 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
-    private string GetAccessibilitySymbol(Departure departure)
+    private string ResolveVehicleType(Departure departure, IReadOnlyDictionary<string, VehiclePositionInfo> vehicleTypes)
+    {
+        if (vehicleTypes.Count == 0)
+        {
+            return ResolveRouteTypeName(departure);
+        }
+
+        var tripId = departure.Trip?.Id;
+        if (string.IsNullOrWhiteSpace(tripId))
+        {
+            return ResolveRouteTypeName(departure);
+        }
+
+        if (vehicleTypes.TryGetValue(tripId, out var info))
+        {
+            if (!string.IsNullOrWhiteSpace(info?.DisplayName))
+            {
+                return info.DisplayName!;
+            }
+        }
+
+        return ResolveRouteTypeName(departure);
+    }
+
+    private static string ResolveRouteTypeName(Departure departure)
+    {
+        return departure.Route?.Type switch
+        {
+            0 => "tramvaj",
+            1 => "metro",
+            2 => "vlak",
+            3 => "bus",
+            11 => "trolejbus",
+            _ => string.Empty
+        };
+    }
+
+    private string GetAccessibilitySymbol(Departure departure, IReadOnlyDictionary<string, VehiclePositionInfo> vehicleInfos)
+    {
+        if (departure.Trip?.Id is string tripId &&
+            vehicleInfos.TryGetValue(tripId, out var info) &&
+            info?.WheelchairAccessible is bool vwFromVehicle)
+        {
+            return vwFromVehicle ? "♿" : string.Empty;
+        }
+
+        if (departure.Trip?.IsWheelchairAccessible is bool vwTrip)
+        {
+            return vwTrip ? "♿" : string.Empty;
+        }
+
+        bool accessible =
+            (departure.Trip?.WheelchairAccessible ?? 0) == 1 ||
+            (departure.WheelchairAccessible ?? 0) == 1 ||
+            departure.Vehicle?.WheelchairAccessible == true ||
+            departure.Vehicle?.LowFloor == true;
+
+        return accessible ? "♿" : string.Empty;
+    }
+private string GetAccessibilitySymbol(Departure departure)
     {
         bool accessible =
             (departure.Trip?.WheelchairAccessible ?? 0) == 1 ||

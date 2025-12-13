@@ -111,4 +111,153 @@ public class GolemioClient
 
         throw new HttpRequestException($"Golemio API neuspesne ({string.Join(" | ", errors)})");
     }
+
+    public async Task<IReadOnlyDictionary<string, VehiclePositionInfo>> GetVehicleInfoByTripAsync(
+        IEnumerable<string> tripIds,
+        int limit = 500,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = (tripIds ?? Array.Empty<string>())
+            .Select(id => id?.Trim() ?? string.Empty)
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (ids.Count == 0)
+        {
+            return new Dictionary<string, VehiclePositionInfo>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        var token = ApiKey?.Trim();
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            throw new InvalidOperationException("Chybi API klic pro vehiclepositions.");
+        }
+
+        // Zkusime nejdrive se scopes pro vehicle_descriptor, pripadne fallback bez nich (nektere klice/scopes vraceji 400).
+        var uris = new[]
+        {
+            $"https://api.golemio.cz/v2/vehiclepositions?limit={limit}&scopes=info&scopes=trip&scopes=vehicle_descriptor",
+            $"https://api.golemio.cz/v2/vehiclepositions?limit={limit}"
+        };
+
+        HttpResponseMessage? response = null;
+        foreach (var uri in uris)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+            request.Headers.TryAddWithoutValidation("X-Access-Token", token);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            response = await _httpClient.SendAsync(request, cancellationToken);
+            if (response.IsSuccessStatusCode)
+            {
+                break;
+            }
+
+            // Pokud dostaneme 400 kvuli scopes, zkus dalsi URI.
+            if (response.StatusCode == HttpStatusCode.BadRequest)
+            {
+                continue;
+            }
+
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new HttpRequestException($"Golemio vehiclepositions neuspesne: {(int)response.StatusCode} {body}");
+        }
+
+        if (response == null || !response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException("Golemio vehiclepositions neuspesne: neznama chyba.");
+        }
+
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        var payload = await JsonSerializer.DeserializeAsync<VehiclePositionsResponse>(stream, _jsonOptions, cancellationToken);
+
+        var result = new Dictionary<string, VehiclePositionInfo>(StringComparer.OrdinalIgnoreCase);
+        var idSet = new HashSet<string>(ids, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var feature in payload?.Features ?? new List<VehiclePositionFeature>())
+        {
+            var tripId = feature.Properties?.Trip?.Gtfs?.TripId;
+            var descriptor = feature.Properties?.Trip?.VehicleDescriptor;
+            var vehicleType = feature.Properties?.Trip?.VehicleType;
+            var wheelchair = feature.Properties?.Trip?.WheelchairAccessible;
+
+            if (string.IsNullOrWhiteSpace(tripId))
+            {
+                continue;
+            }
+
+            if (!idSet.Contains(tripId))
+            {
+                continue;
+            }
+
+            if (!result.ContainsKey(tripId))
+            {
+                var display = ResolveVehicleDisplay(descriptor, vehicleType);
+                if (!string.IsNullOrWhiteSpace(display) || wheelchair != null)
+                {
+                    result[tripId] = new VehiclePositionInfo
+                    {
+                        DisplayName = display,
+                        WheelchairAccessible = wheelchair
+                    };
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private static string ResolveVehicleDisplay(VehicleDescriptor? descriptor, VehicleType? vehicleType)
+    {
+        if (descriptor != null)
+        {
+            var model = descriptor.Model;
+            if (!string.IsNullOrWhiteSpace(model))
+            {
+                var maker = descriptor.Manufacturer;
+                return string.IsNullOrWhiteSpace(maker) ? model : $"{maker} {model}";
+            }
+
+            var label = descriptor.Label;
+            if (!string.IsNullOrWhiteSpace(label))
+            {
+                return label;
+            }
+
+            var descCs = descriptor.DescriptionCs;
+            if (!string.IsNullOrWhiteSpace(descCs))
+            {
+                return descCs;
+            }
+
+            var descEn = descriptor.DescriptionEn;
+            if (!string.IsNullOrWhiteSpace(descEn))
+            {
+                return descEn;
+            }
+        }
+
+        if (vehicleType != null)
+        {
+            if (!string.IsNullOrWhiteSpace(vehicleType.DescriptionCs))
+            {
+                return vehicleType.DescriptionCs;
+            }
+
+            if (!string.IsNullOrWhiteSpace(vehicleType.DescriptionEn))
+            {
+                return vehicleType.DescriptionEn;
+            }
+
+            if (vehicleType.Id.HasValue)
+            {
+                return vehicleType.Id.Value.ToString();
+            }
+        }
+
+        return string.Empty;
+    }
 }
