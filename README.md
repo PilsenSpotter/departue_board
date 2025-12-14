@@ -1,39 +1,40 @@
 # PID Departure Board (WPF, .NET 8)
-Autor/claim: Oliver Bocko
+Autor: Oliver Bocko
 
+Jednoducha desktopova tabule odjezdu pro PID postavena nad Golemio API.
 
-Jednoduchá desktopová tabule odjezdů pro PID (Golemio API).
-
-## AKTUÁLNÍ PRACOVNÍ VERZE
-
-https://github.com/PilsenSpotter/departue_board/releases/tag/0.0.1
+## Aktualni veřejná erze
+0.0.1 � https://github.com/PilsenSpotter/departue_board/releases/tag/0.0.1.6
 
 ## Funkce
-- Vyhledávání zastávky (GTFS stop_id) s fltrováním z GTFS stops.txt.
-- Načtení odjezdů přes Golemio `departureboards` (PID) včetně zpoždění a informací o přístupnosti (pokud je API poskytne).
-- Automatická obnova v nastavitelném intervalu.
+- Svetly/tmavy motiv s prepinacem v zahlavi okna.
+- Vyhledavani zastavek (GTFS stop_id) a vyber vice zastavek najednou.
+- Filtry dopravy (bus, tram, metro, vlak, trolejbus) a platformy, pokud je API vrati.
+- Filtr pristupnosti (vse / bezbarierove / vysokopodlazni) a zobrazeni pristupnosti v tabulce.
+- Zobrazeni odjezdu z Golemio `departureboards` vcetne zpozdeni, platformy, typu vozidla a odpoctu.
+- Automaticka obnova v nastavovanem intervalu a nastaveni minut dopredu.
 
-## Požadavky
+## Pozadavky
 - .NET 8 SDK
-- Platný Golemio API token s přístupem k `/v2/pid/departureboards`
+- Golemio API token s pristupem k `/v2/pid/departureboards`
 
-## Konfigurace API klíče
-V souboru `DepartureBoard/Services/GolemioClient.cs` nahraď řetězec v `EmbeddedApiKey` svým tokenem:
+## Konfigurace API klice
+V souboru `DepartureBoard/Services/GolemioClient.cs` nahrad retezec v `EmbeddedApiKey` svym tokenem:
 ```csharp
 private const string EmbeddedApiKey = "TVUJ_TOKEN";
 ```
-Alternativa: nastav proměnnou prostředí `GOLEMIO_API_KEY` a nechej `EmbeddedApiKey` prázdný.
+Alternativa: nastav promennou prostredi `GOLEMIO_API_KEY` a nech `EmbeddedApiKey` prazdny.
 
-## Spuštění
+## Spusteni
 ```bash
 dotnet run --project DepartureBoard/DepartureBoard.csproj
 ```
 
-## Použití
-1) Do pole „Vyhledat zastávku“ napiš název, vyber konkrétní položku (platformové stop_id).  
-2) Klikni „Načíst odjezdy“. Odjezdy se pak obnovují podle intervalu.  
-3) Sloupce: Linka, Směr, Stanoviště, Odjezd, Za, Zpoždění, Acc (♿ pokud API vrátí přístupnost).
+## Pouziti
+1) Do pole "Vyhledat zastavku" napis nazev, vyber konkretni polozku (platformove stop_id).
+2) Pridej dalsi zastavky dle potreby, nastav filtry a interval.
+3) Klikni "Nacist odjezdy" � data se pak obnovuji automaticky.
 
-## Poznámky
-- `departureboards` vrací přístupnost jen pokud je v datech (trip/departure/vehicle). Pokud API neposílá `wheelchair_accessible/low_floor`, sloupec zůstane prázdný.  
-- Vyhledávání používá aktuální GTFS z `https://data.pid.cz/PID_GTFS.zip` a filtruje pouze skutečné zastávkové body (ne parent stanice).
+## Poznamky
+- `departureboards` vraci pristupnost jen pokud je v datech (trip/departure/vehicle). Pokud API neposila `wheelchair_accessible/low_floor`, sloupec zustane prazdny.
+- Vyhledavani pouziva aktualni GTFS z `https://data.pid.cz/PID_GTFS.zip` a filtruje pouze skutecne zastavkove body (ne parent stanice).

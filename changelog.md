@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- Pridan tmavy/svetly motiv s prepinacem v zahlavi okna.
+
+## 0.0.1.6
 - Jemné doladění barev (Win11-like) a redesign tabulky odjezdů (rounded karty, nové hover/alternace).
 - Scrollování přímo v seznamu vybraných zastávek i ve výsledcích vyhledávání kolečkem/touchpadem.
 - Vylepšené zobrazení typů vozidel s emoji ikonou podle druhu linky.
