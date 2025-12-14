@@ -1,12 +1,8 @@
 # Changelog
 
-## TEST WEBHOOKU
+## UPDATE WEBHOOK
 
-- test
-
-## TEST PUSH
-
-- TSTa
+- Testststststst
 
 ## Unreleased
 - Jemné doladění barev (Win11-like) a redesign tabulky odjezdů (rounded karty, nové hover/alternace).
