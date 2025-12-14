@@ -31,7 +31,21 @@ jobs:
           COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
           DIFF_TEXT: ${{ steps.diff.outputs.diff }}
         run: |
-          payload=$(jq -n \
-            --arg content "Changelog byl aktualizován v ${REPO} (${REF})\n${COMMIT_URL}\n\n\`\`\`diff\n${DIFF_TEXT}\n\`\`\`" \
-            '{content: $content}')
+          header="# 📣 NOVINKY Z VÝVOJE!"
+          summary="nové změny v changelog.md"
+          mention="<@&1315015865371987978>"
+
+          diff_block=$(printf "%s" "$DIFF_TEXT" | jq -r .)
+          content="$header
+
+$summary
+$mention
+
+${COMMIT_URL}
+
+\`\`\`diff
+${diff_block}
+\`\`\`"
+
+          payload=$(jq -n --arg content "$content" '{content: $content}')
           curl -H "Content-Type: application/json" -d "$payload" "$WEBHOOK_URL"
