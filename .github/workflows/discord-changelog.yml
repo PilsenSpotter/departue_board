@@ -25,12 +25,17 @@ jobs:
 
       - name: Send Discord notification
         env:
-          WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL || secrets.DISCORD_WEBHOOK || secrets.WEBHOOK_URL }}
           REPO: ${{ github.repository }}
           REF: ${{ github.ref_name }}
           COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
           DIFF_TEXT: ${{ steps.diff.outputs.diff }}
         run: |
+          if [ -z "$WEBHOOK_URL" ]; then
+            echo "Discord webhook secret (DISCORD_WEBHOOK_URL / DISCORD_WEBHOOK / WEBHOOK_URL) is not set."
+            exit 1
+          fi
+
           header="# 📣 NOVINKY Z VÝVOJE!"
           summary="nové změny v changelog.md"
           mention="<@&1315015865371987978>"
