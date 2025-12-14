@@ -7,16 +7,36 @@
         mc:Ignorable="d"
         Title="PID Departure Board" Height="650" Width="1050"
         Icon="icon.ico"
-        Background="#0B1B2B"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        Foreground="{DynamicResource PrimaryForegroundBrush}"
         Loaded="OnLoaded">
     <Window.Resources>
-        <SolidColorBrush x:Key="AccentBrush" Color="#55D6BE" />
-        <SolidColorBrush x:Key="MutedBrush" Color="#9BB1C8" />
-        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
-        <LinearGradientBrush x:Key="HeaderBrush" StartPoint="0,0" EndPoint="1,0">
-            <GradientStop Color="#12324F" Offset="0"/>
-            <GradientStop Color="#0E2238" Offset="1"/>
-        </LinearGradientBrush>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/DarkTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+            <Style TargetType="TextBox">
+                <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}" />
+                <Setter Property="CaretBrush" Value="{DynamicResource PrimaryForegroundBrush}" />
+            </Style>
+            <Style TargetType="ComboBox">
+                <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}" />
+            </Style>
+            <Style TargetType="ComboBoxItem">
+                <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}" />
+            </Style>
+            <Style TargetType="CheckBox">
+                <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}" />
+            </Style>
+            <Style TargetType="Button">
+                <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}" />
+            </Style>
+        </ResourceDictionary>
     </Window.Resources>
 
     <Grid Margin="16">
@@ -27,24 +47,40 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Background="{StaticResource HeaderBrush}" Padding="12" CornerRadius="10" Margin="0 0 0 6">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="PID Departure Board" FontSize="28" FontWeight="Bold" Foreground="White"/>
-                <TextBlock Text="Pracovní verze 0.0.1.6" FontSize="14" Foreground="{StaticResource MutedBrush}" Margin="12 8 0 0"/>
-            </StackPanel>
+        <Border Grid.Row="0" Background="{DynamicResource HeaderBrush}" Padding="12" CornerRadius="10" Margin="0 0 0 6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="PID Departure Board" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource PrimaryForegroundBrush}"/>
+                    <TextBlock Text="Pracovn? verze 0.0.1.6" FontSize="14" Foreground="{DynamicResource MutedBrush}" Margin="12 8 0 0"/>
+                </StackPanel>
+                <ToggleButton Grid.Column="1"
+                              Content="{Binding ThemeToggleLabel}"
+                              IsChecked="{Binding IsLightTheme, Mode=TwoWay}"
+                              Padding="10 6"
+                              MinWidth="120"
+                              Margin="8 0 0 0"
+                              Background="{DynamicResource CardBackgroundBrush}"
+                              BorderBrush="{DynamicResource CardBorderBrush}"
+                              Foreground="{DynamicResource PrimaryForegroundBrush}"
+                              ToolTip="Prepnout svetly/tmavy motiv" />
+            </Grid>
         </Border>
 
-        <Border Grid.Row="1" Background="#112233" Padding="12" CornerRadius="8">
+        <Border Grid.Row="1" Background="{DynamicResource PanelBackgroundBrush}" Padding="12" CornerRadius="8">
             <WrapPanel ItemWidth="260" MinWidth="220" VerticalAlignment="Center" Margin="0" >
                 <StackPanel Margin="0 0 16 8" Width="250">
-                    <TextBlock Text="Vyhledat zastávku" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
+                    <TextBlock Text="Vyhledat zastávku" Foreground="{DynamicResource MutedBrush}" Margin="0 0 0 4"/>
                     <TextBox x:Name="StopSearchBox"
                              Text="{Binding StopSearchText, UpdateSourceTrigger=PropertyChanged}"
                              TextChanged="StopSearchBox_OnTextChanged"
                              Width="240" />
-                    <Border Background="#0F1E30" BorderBrush="#1F2F44" BorderThickness="1" CornerRadius="6" Margin="0 6 0 0">
+                    <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0 6 0 0">
                         <ListBox ItemsSource="{Binding StopResults}" SelectionChanged="StopResults_OnSelectionChanged"
-                                 Background="Transparent" BorderThickness="0" Foreground="White"
+                                 Background="Transparent" BorderThickness="0" Foreground="{DynamicResource PrimaryForegroundBrush}"
                                  MaxHeight="220"
                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
@@ -52,15 +88,15 @@
                                 <DataTemplate>
                                     <StackPanel>
                                         <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
-                                        <TextBlock Text="{Binding DisplayIds}" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
+                                        <TextBlock Text="{Binding DisplayIds}" Foreground="{DynamicResource MutedBrush}" FontSize="11"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
                     </Border>
                     <StackPanel Margin="0 6 0 0">
-                        <TextBlock Text="Vybrane zastavky" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
-                        <Border Background="#0F1E30" BorderBrush="#1F2F44" BorderThickness="1" CornerRadius="6">
+                        <TextBlock Text="Vybrane zastavky" Foreground="{DynamicResource MutedBrush}" Margin="0 0 0 4"/>
+                        <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1" CornerRadius="6">
                             <ScrollViewer MaxHeight="180">
                                 <ItemsControl ItemsSource="{Binding SelectedStops}">
                                     <ItemsControl.ItemsPanel>
@@ -70,14 +106,14 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Background="#1A2C44" CornerRadius="6" Padding="6" Margin="4" BorderBrush="#233A4F" BorderThickness="1">
+                                            <Border Background="{DynamicResource ChipBackgroundBrush}" CornerRadius="6" Padding="6" Margin="4" BorderBrush="{DynamicResource ChipBorderBrush}" BorderThickness="1">
                                                 <StackPanel>
                                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Margin="0 0 6 0"/>
                                                         <Button Content="x" Width="22" Height="22" Padding="0" Click="RemoveSelectedStop_OnClick"
                                                                 Tag="{Binding}" ToolTip="Odebrat zastavku"/>
                                                     </StackPanel>
-                                                    <TextBlock Text="{Binding DisplayIds}" FontSize="11" Foreground="{StaticResource MutedBrush}"/>
+                                                    <TextBlock Text="{Binding DisplayIds}" FontSize="11" Foreground="{DynamicResource MutedBrush}"/>
                                                 </StackPanel>
                                             </Border>
                                         </DataTemplate>
@@ -89,28 +125,28 @@
                 </StackPanel>
 
                 <StackPanel Margin="0 0 16 8">
-                    <TextBlock Text="Minut dopředu" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
+                    <TextBlock Text="Minut dopředu" Foreground="{DynamicResource MutedBrush}" Margin="0 0 0 4"/>
                     <TextBox Text="{Binding MinutesAfter, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
                 </StackPanel>
 
                 <StackPanel Margin="0 0 16 8">
-                    <TextBlock Text="Obnovit každých (s)" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
+                    <TextBlock Text="Obnovit každých (s)" Foreground="{DynamicResource MutedBrush}" Margin="0 0 0 4"/>
                     <TextBox Text="{Binding RefreshSeconds, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
                 </StackPanel>
 
                 <StackPanel Margin="0 0 16 8">
-                    <TextBlock Text="Filtr dopravy" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
+                    <TextBlock Text="Filtr dopravy" Foreground="{DynamicResource MutedBrush}" Margin="0 0 0 4"/>
                     <WrapPanel>
-                        <CheckBox Content="🚍 Bus" IsChecked="{Binding ShowBus, UpdateSourceTrigger=PropertyChanged}" Foreground="White" Margin="0 0 8 0"/>
-                        <CheckBox Content="🚊 Tram" IsChecked="{Binding ShowTram, UpdateSourceTrigger=PropertyChanged}" Foreground="White" Margin="0 0 8 0"/>
-                        <CheckBox Content="🚇 Metro" IsChecked="{Binding ShowMetro, UpdateSourceTrigger=PropertyChanged}" Foreground="White" Margin="0 0 8 0"/>
-                        <CheckBox Content="🚆 Vlak" IsChecked="{Binding ShowTrain, UpdateSourceTrigger=PropertyChanged}" Foreground="White" Margin="0 0 8 0"/>
-                        <CheckBox Content="🚎 Trol." IsChecked="{Binding ShowTrolley, UpdateSourceTrigger=PropertyChanged}" Foreground="White"/>
+                        <CheckBox Content="🚍 Bus" IsChecked="{Binding ShowBus, UpdateSourceTrigger=PropertyChanged}" Foreground="{DynamicResource PrimaryForegroundBrush}" Margin="0 0 8 0"/>
+                        <CheckBox Content="🚊 Tram" IsChecked="{Binding ShowTram, UpdateSourceTrigger=PropertyChanged}" Foreground="{DynamicResource PrimaryForegroundBrush}" Margin="0 0 8 0"/>
+                        <CheckBox Content="🚇 Metro" IsChecked="{Binding ShowMetro, UpdateSourceTrigger=PropertyChanged}" Foreground="{DynamicResource PrimaryForegroundBrush}" Margin="0 0 8 0"/>
+                        <CheckBox Content="🚆 Vlak" IsChecked="{Binding ShowTrain, UpdateSourceTrigger=PropertyChanged}" Foreground="{DynamicResource PrimaryForegroundBrush}" Margin="0 0 8 0"/>
+                        <CheckBox Content="🚎 Trol." IsChecked="{Binding ShowTrolley, UpdateSourceTrigger=PropertyChanged}" Foreground="{DynamicResource PrimaryForegroundBrush}"/>
                     </WrapPanel>
                 </StackPanel>
 
                 <StackPanel Margin="0 0 16 8">
-                    <TextBlock Text="Přístupnost" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
+                    <TextBlock Text="Přístupnost" Foreground="{DynamicResource MutedBrush}" Margin="0 0 0 4"/>
                     <ComboBox SelectedValuePath="Tag"
                               SelectedValue="{Binding AccessibilityFilter, UpdateSourceTrigger=PropertyChanged}"
                               Width="180">
@@ -121,7 +157,7 @@
                 </StackPanel>
 
                 <StackPanel Margin="0 0 16 8" Visibility="{Binding HasPlatformFilters, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="Stanoviště (MHD)" Foreground="{StaticResource MutedBrush}" Margin="0 0 0 4"/>
+                    <TextBlock Text="Stanoviště (MHD)" Foreground="{DynamicResource MutedBrush}" Margin="0 0 0 4"/>
                     <ItemsControl ItemsSource="{Binding Platforms}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -132,7 +168,7 @@
                             <DataTemplate>
                                 <CheckBox Content="{Binding Name}"
                                           IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                          Foreground="White"
+                                          Foreground="{DynamicResource PrimaryForegroundBrush}"
                                           Margin="0 0 8 8"/>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -145,25 +181,25 @@
             </WrapPanel>
         </Border>
 
-        <Border Grid.Row="2" Background="#0E1928" CornerRadius="10" Padding="6">
-            <ListView ItemsSource="{Binding Departures}" BorderThickness="0" Background="Transparent" Foreground="White"
+        <Border Grid.Row="2" Background="{DynamicResource ListBackgroundBrush}" CornerRadius="10" Padding="6">
+            <ListView ItemsSource="{Binding Departures}" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource PrimaryForegroundBrush}"
                       x:Name="DeparturesList" AlternationCount="2">
                 <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
                         <Setter Property="Background" Value="Transparent"/>
-                        <Setter Property="Foreground" Value="White"/>
+                        <Setter Property="Foreground" Value="{DynamicResource PrimaryForegroundBrush}"/>
                         <Setter Property="Padding" Value="8 6"/>
                         <Setter Property="Margin" Value="0 2"/>
                         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                         <Style.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#1A2C44"/>
+                                <Setter Property="Background" Value="{DynamicResource ListHoverBrush}"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#16314D"/>
+                                <Setter Property="Background" Value="{DynamicResource ListSelectedBrush}"/>
                             </Trigger>
                             <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                                <Setter Property="Background" Value="#0F1E30"/>
+                                <Setter Property="Background" Value="{DynamicResource ListAlternateBrush}"/>
                             </Trigger>
                         </Style.Triggers>
                     </Style>
@@ -174,7 +210,7 @@
                         <GridViewColumn Width="90" Header="Linka">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Border Background="#233A4F" CornerRadius="4" Padding="6" HorizontalAlignment="Left">
+                                    <Border Background="{DynamicResource BadgeBackgroundBrush}" CornerRadius="4" Padding="6" HorizontalAlignment="Left">
                                         <TextBlock Text="{Binding Line}" FontWeight="Bold" />
                                     </Border>
                                 </DataTemplate>
@@ -194,7 +230,7 @@
                         <GridViewColumn Width="200" Header="Zastavka">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding StopName}" FontSize="12" Foreground="{StaticResource MutedBrush}"
+                                    <TextBlock Text="{Binding StopName}" FontSize="12" Foreground="{DynamicResource MutedBrush}"
                                                Visibility="{Binding DataContext.ShowStopName, RelativeSource={RelativeSource AncestorType={x:Type Window}}, Converter={StaticResource BoolToVisibility}}"/>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
@@ -234,7 +270,7 @@
                         <GridViewColumn Width="60" Header="Acc">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Accessibility}" HorizontalAlignment="Center" FontSize="16" Foreground="{StaticResource AccentBrush}"/>
+                                    <TextBlock Text="{Binding Accessibility}" HorizontalAlignment="Center" FontSize="16" Foreground="{DynamicResource AccentBrush}"/>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
@@ -256,8 +292,8 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource MutedBrush}" Margin="4 0 0 0" VerticalAlignment="Center"/>
-            <TextBlock Grid.Column="1" Text="Created by Oliver Bocko" Foreground="{StaticResource MutedBrush}" Margin="0 0 4 0" VerticalAlignment="Center"/>
+            <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource MutedBrush}" Margin="4 0 0 0" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1" Text="Created by Oliver Bocko" Foreground="{DynamicResource MutedBrush}" Margin="0 0 4 0" VerticalAlignment="Center"/>
         </Grid>
     </Grid>
 </Window>

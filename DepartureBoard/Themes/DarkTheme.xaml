@@ -1,0 +1,28 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="AccentBrush" Color="#55D6BE" />
+    <SolidColorBrush x:Key="MutedBrush" Color="#9BB1C8" />
+    <SolidColorBrush x:Key="PrimaryForegroundBrush" Color="White" />
+
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#0B1B2B" />
+    <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#112233" />
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#0F1E30" />
+    <SolidColorBrush x:Key="CardBorderBrush" Color="#1F2F44" />
+
+    <SolidColorBrush x:Key="ChipBackgroundBrush" Color="#1A2C44" />
+    <SolidColorBrush x:Key="ChipBorderBrush" Color="#233A4F" />
+    <SolidColorBrush x:Key="BadgeBackgroundBrush" Color="#233A4F" />
+
+    <SolidColorBrush x:Key="ListBackgroundBrush" Color="#0E1928" />
+    <SolidColorBrush x:Key="ListHoverBrush" Color="#1A2C44" />
+    <SolidColorBrush x:Key="ListSelectedBrush" Color="#16314D" />
+    <SolidColorBrush x:Key="ListAlternateBrush" Color="#0F1E30" />
+
+    <SolidColorBrush x:Key="InputBackgroundBrush" Color="#0F1E30" />
+    <SolidColorBrush x:Key="InputBorderBrush" Color="#1F2F44" />
+
+    <LinearGradientBrush x:Key="HeaderBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#12324F" Offset="0" />
+        <GradientStop Color="#0E2238" Offset="1" />
+    </LinearGradientBrush>
+</ResourceDictionary>

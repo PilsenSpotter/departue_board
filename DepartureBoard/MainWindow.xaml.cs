@@ -22,6 +22,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private CancellationTokenSource? _stopSearchCts;
     private bool _isLoading;
     private bool _pendingFilterRefresh;
+    private readonly ResourceDictionary _darkTheme;
+    private readonly ResourceDictionary _lightTheme;
+    private ResourceDictionary? _currentTheme;
+    private bool _isLightTheme;
 
     private readonly List<string> _selectedStopIds = new();
     private int _minutesAfter = 20;
@@ -41,6 +45,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public ObservableCollection<StopEntry> StopResults { get; } = new();
     public ObservableCollection<StopEntry> SelectedStops { get; } = new();
     public ObservableCollection<PlatformFilter> Platforms { get; } = new();
+
+    public bool IsLightTheme
+    {
+        get => _isLightTheme;
+        set
+        {
+            if (SetField(ref _isLightTheme, value))
+            {
+                ApplyTheme(value ? _lightTheme : _darkTheme);
+                OnPropertyChanged(nameof(ThemeToggleLabel));
+            }
+        }
+    }
+
+    public string ThemeToggleLabel => IsLightTheme ? "Svetly motiv" : "Tmavy motiv";
 
     public bool ShowBus
     {
@@ -167,6 +186,20 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         InitializeComponent();
         DataContext = this;
+
+        _darkTheme = Resources.MergedDictionaries.FirstOrDefault() ?? new ResourceDictionary
+        {
+            Source = new Uri("Themes/DarkTheme.xaml", UriKind.Relative)
+        };
+        _lightTheme = new ResourceDictionary
+        {
+            Source = new Uri("Themes/LightTheme.xaml", UriKind.Relative)
+        };
+        _currentTheme = _darkTheme;
+        if (!Resources.MergedDictionaries.Contains(_currentTheme))
+        {
+            Resources.MergedDictionaries.Insert(0, _currentTheme);
+        }
 
         ApiKey = _client.ApiKey ?? string.Empty;
 
@@ -655,6 +688,22 @@ private string GetAccessibilitySymbol(Departure departure)
     {
         _pendingFilterRefresh = true;
         _ = RefreshDeparturesAsync();
+    }
+
+    private void ApplyTheme(ResourceDictionary theme)
+    {
+        if (theme == _currentTheme)
+        {
+            return;
+        }
+
+        if (_currentTheme != null)
+        {
+            Resources.MergedDictionaries.Remove(_currentTheme);
+        }
+
+        Resources.MergedDictionaries.Insert(0, theme);
+        _currentTheme = theme;
     }
 }
 

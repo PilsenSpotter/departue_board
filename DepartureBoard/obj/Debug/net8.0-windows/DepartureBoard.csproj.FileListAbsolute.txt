@@ -39,3 +39,5 @@ C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-
 C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\DepartureBoard.genruntimeconfig.cache
 C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\ref\DepartureBoard.dll
 C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\DepartureBoard_MarkupCompile.lref
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\Themes\DarkTheme.baml
+C:\Users\Server\Documents\GitHub\departue_board\DepartureBoard\obj\Debug\net8.0-windows\Themes\LightTheme.baml
