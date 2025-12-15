@@ -18,6 +18,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 {
     private readonly GolemioClient _client = new();
     private readonly StopLookupService _stopLookup = new();
+    private readonly OfflineCacheService _cache = new();
     private readonly DispatcherTimer _timer;
     private CancellationTokenSource? _stopSearchCts;
     private bool _isLoading;
@@ -249,6 +250,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 MinutesAfter);
 
             UpdatePlatformFilters(departures);
+            await _cache.SaveDeparturesAsync(_selectedStopIds, MinutesAfter, departures, CancellationToken.None);
 
             var tripIds = departures
                 .Select(d => d.Trip?.Id)
@@ -262,15 +264,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 : await _client.GetVehicleInfoByTripAsync(tripIds, cancellationToken: CancellationToken.None);
 
             var now = DateTimeOffset.Now;
-            var mapped = departures
-                .Where(IsModeAllowed)
-                .Where(IsPlatformAllowed)
-                .Where(d => IsAccessibilityAllowed(d, vehicleInfos))
-                .Select(d => MapDeparture(d, now, vehicleInfos))
-                .Where(d => d is not null)
-                .Cast<DepartureDisplay>()
-                .OrderBy(d => d.When)
-                .ToList();
+            var mapped = BuildDepartureDisplays(departures, vehicleInfos, now);
 
             Departures.Clear();
             foreach (var item in mapped)
@@ -282,7 +276,25 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Nepodarilo se nacist data: {ex.Message}";
+            var cached = await _cache.LoadDeparturesAsync();
+            if (cached != null && StopSetsCompatible(cached.StopIds, _selectedStopIds))
+            {
+                UpdatePlatformFilters(cached.Departures);
+                var mapped = BuildDepartureDisplays(cached.Departures, new Dictionary<string, VehiclePositionInfo>(), DateTimeOffset.Now);
+
+                Departures.Clear();
+                foreach (var item in mapped)
+                {
+                    Departures.Add(item);
+                }
+
+                StatusMessage = $"Offline rezim: ukazuji cache z {cached.SavedAt.LocalDateTime:HH:mm} (odjezdu: {Departures.Count}, okno {cached.MinutesAfter} min).";
+            }
+            else
+            {
+                StatusMessage = $"Nepodarilo se nacist data: {ex.Message}";
+                Departures.Clear();
+            }
         }
         finally
         {
@@ -293,6 +305,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 await RefreshDeparturesAsync();
             }
         }
+    }
+
+    private List<DepartureDisplay> BuildDepartureDisplays(IEnumerable<Departure> departures, IReadOnlyDictionary<string, VehiclePositionInfo> vehicleInfos, DateTimeOffset now)
+    {
+        return departures
+            .Where(IsModeAllowed)
+            .Where(IsPlatformAllowed)
+            .Where(d => IsAccessibilityAllowed(d, vehicleInfos))
+            .Select(d => MapDeparture(d, now, vehicleInfos))
+            .Where(d => d is not null)
+            .Cast<DepartureDisplay>()
+            .OrderBy(d => d.When)
+            .ToList();
     }
 
     private DepartureDisplay? MapDeparture(Departure departure, DateTimeOffset now, IReadOnlyDictionary<string, VehiclePositionInfo> vehicleInfos)
@@ -682,6 +707,18 @@ private string GetAccessibilitySymbol(Departure departure)
         }
 
         return string.Empty;
+    }
+
+    private static bool StopSetsCompatible(IEnumerable<string> cached, IEnumerable<string> current)
+    {
+        var cachedSet = new HashSet<string>(cached ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+        var currentSet = new HashSet<string>(current ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+        if (cachedSet.Count == 0 || currentSet.Count == 0)
+        {
+            return false;
+        }
+
+        return cachedSet.IsSupersetOf(currentSet) || cachedSet.SetEquals(currentSet);
     }
 
     private void TriggerFilterRefresh()

@@ -11,20 +11,27 @@ namespace DepartureBoard.Services;
 public class StopLookupService
 {
     private const string GtfsUrl = "https://data.pid.cz/PID_GTFS.zip";
+    private static readonly TimeSpan StopsCacheMaxAge = TimeSpan.FromDays(7);
+    private static readonly TimeSpan StopsRefreshInterval = TimeSpan.FromHours(12);
+
     private readonly HttpClient _httpClient = new();
     private readonly List<StopEntry> _stops = new();
+    private readonly OfflineCacheService _cache = new();
     private Task? _loadTask;
     public bool IsLoaded { get; private set; }
+    private DateTimeOffset? _lastDownloadUtc;
 
     public async Task EnsureLoadedAsync(CancellationToken cancellationToken = default)
     {
-        if (IsLoaded)
+        var needsRefresh = ShouldRefreshStops();
+        if (IsLoaded && !needsRefresh)
         {
             return;
         }
 
-        if (_loadTask == null || _loadTask.IsCanceled || _loadTask.IsFaulted)
+        if (_loadTask == null || _loadTask.IsCanceled || _loadTask.IsFaulted || needsRefresh)
         {
+            // Pouzijeme CancellationToken.None, aby se nacteni GTFS neukoncilo pri psani do textboxu.
             _loadTask = LoadStopsAsync(CancellationToken.None);
         }
 
@@ -55,16 +62,48 @@ public class StopLookupService
 
     private async Task LoadStopsAsync(CancellationToken cancellationToken)
     {
+        // Nejprve zkusime cache, aby UI melo data i bez site.
+        var loadedFromCache = await TryLoadStopsFromCacheAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            await DownloadStopsAsync(cancellationToken).ConfigureAwait(false);
+            _lastDownloadUtc = DateTimeOffset.UtcNow;
+            IsLoaded = true;
+        }
+        catch
+        {
+            if (loadedFromCache)
+            {
+                IsLoaded = true;
+                return;
+            }
+
+            IsLoaded = false;
+            throw;
+        }
+    }
+
+    private async Task DownloadStopsAsync(CancellationToken cancellationToken)
+    {
         using var stream = await _httpClient.GetStreamAsync(GtfsUrl, cancellationToken).ConfigureAwait(false);
         using var memory = new MemoryStream();
         await stream.CopyToAsync(memory, cancellationToken).ConfigureAwait(false);
         memory.Position = 0;
 
-        using var archive = new ZipArchive(memory, ZipArchiveMode.Read, leaveOpen: false);
+        _stops.Clear();
+        LoadStopsFromArchive(memory, cancellationToken);
+        await _cache.SaveStopsAsync(_stops, cancellationToken).ConfigureAwait(false);
+        IsLoaded = true;
+    }
+
+    private void LoadStopsFromArchive(Stream archiveStream, CancellationToken cancellationToken)
+    {
+        using var archive = new ZipArchive(archiveStream, ZipArchiveMode.Read, leaveOpen: true);
         var entry = archive.GetEntry("stops.txt");
         if (entry is null)
         {
-            throw new InvalidOperationException("stops.txt v GTFS balíku nenalezen.");
+            throw new InvalidOperationException("stops.txt v GTFS balicku nenalezen.");
         }
 
         using var entryStream = entry.Open();
@@ -83,7 +122,7 @@ public class StopLookupService
 
         if (idxStopId < 0 || idxName < 0)
         {
-            throw new InvalidOperationException("Hlavička stops.txt neobsahuje stop_id/stop_name.");
+            throw new InvalidOperationException("Hlavicka stops.txt neobsahuje stop_id/stop_name.");
         }
 
         var byKey = new Dictionary<string, StopEntry>(StringComparer.OrdinalIgnoreCase);
@@ -102,13 +141,13 @@ public class StopLookupService
             var stopId = fields[idxStopId];
             var stopName = fields[idxName];
 
-            // Jen skutečné zastávkové body, ne parent stanice (location_type 1).
+            // Jen skutecne zastavkove body, ne parent stanice (location_type 1).
             if (!string.IsNullOrWhiteSpace(locationType) && locationType.Trim() == "1")
             {
                 continue;
             }
 
-            // Skupinu stavíme podle názvu zastávky, aby se spojily i různé parent_station (např. metro + povrch).
+            // Skupinu stavime podle nazvu zastavky, aby se spojily i ruzne parent_station (napr. metro + povrch).
             var key = Normalize(stopName);
 
             if (!byKey.TryGetValue(key, out var stop))
@@ -137,6 +176,45 @@ public class StopLookupService
         }
 
         IsLoaded = true;
+    }
+
+    private async Task<bool> TryLoadStopsFromCacheAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var cached = await _cache.LoadStopsAsync(cancellationToken).ConfigureAwait(false);
+            if (cached?.Stops?.Count > 0)
+            {
+                var freshEnough = DateTimeOffset.UtcNow - cached.SavedAt <= StopsCacheMaxAge;
+
+                _stops.Clear();
+                foreach (var stop in cached.Stops)
+                {
+                    stop.SearchKey = string.IsNullOrWhiteSpace(stop.SearchKey) ? Normalize(stop.Name) : stop.SearchKey;
+                    _stops.Add(stop);
+                }
+
+                _lastDownloadUtc = cached.SavedAt;
+                IsLoaded = true;
+                return freshEnough || _stops.Count > 0;
+            }
+        }
+        catch
+        {
+            // Ignoruj chyby cache, zkusime download.
+        }
+
+        return false;
+    }
+
+    private bool ShouldRefreshStops()
+    {
+        if (!_lastDownloadUtc.HasValue)
+        {
+            return true;
+        }
+
+        return DateTimeOffset.UtcNow - _lastDownloadUtc.Value >= StopsRefreshInterval;
     }
 
     private static string Normalize(string text)
