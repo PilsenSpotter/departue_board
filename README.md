@@ -3,11 +3,12 @@ Autor: Oliver Bocko
 
 Jednoducha desktopova tabule odjezdu pro PID postavena nad Golemio API.
 
-## Aktualni veřejná erze
-0.0.1  https://github.com/PilsenSpotter/departue_board/releases/tag/0.0.1
+## Aktualni verze
+0.0.1.6 � https://github.com/PilsenSpotter/departue_board/releases/tag/0.0.1.6
 
 ## Funkce
 - Svetly/tmavy motiv s prepinacem v zahlavi okna.
+- Offline cache GTFS stops i poslednich odjezdu pro pripad, ze API/sit vypadne.
 - Vyhledavani zastavek (GTFS stop_id) a vyber vice zastavek najednou.
 - Filtry dopravy (bus, tram, metro, vlak, trolejbus) a platformy, pokud je API vrati.
 - Filtr pristupnosti (vse / bezbarierove / vysokopodlazni) a zobrazeni pristupnosti v tabulce.
@@ -33,7 +34,7 @@ dotnet run --project DepartureBoard/DepartureBoard.csproj
 ## Pouziti
 1) Do pole "Vyhledat zastavku" napis nazev, vyber konkretni polozku (platformove stop_id).
 2) Pridej dalsi zastavky dle potreby, nastav filtry a interval.
-3) Klikni "Nacist odjezdy" � data se pak obnovuji automaticky.
+3) Klikni "Nacist odjezdy" - data se pak obnovuji automaticky.
 
 ## Poznamky
 - `departureboards` vraci pristupnost jen pokud je v datech (trip/departure/vehicle). Pokud API neposila `wheelchair_accessible/low_floor`, sloupec zustane prazdny.
