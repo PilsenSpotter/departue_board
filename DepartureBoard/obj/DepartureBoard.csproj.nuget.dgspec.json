@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\Server\\Documents\\GitHub\\departue_board\\DepartureBoard\\DepartureBoard.csproj": {}
+    "C:\\Users\\Server\\Documents\\GitHub\\departue_board\\DepartureBoard\\DepartureBoard.csproj": {}
   },
   "projects": {
-    "c:\\Users\\Server\\Documents\\GitHub\\departue_board\\DepartureBoard\\DepartureBoard.csproj": {
+    "C:\\Users\\Server\\Documents\\GitHub\\departue_board\\DepartureBoard\\DepartureBoard.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\Server\\Documents\\GitHub\\departue_board\\DepartureBoard\\DepartureBoard.csproj",
+        "projectUniqueName": "C:\\Users\\Server\\Documents\\GitHub\\departue_board\\DepartureBoard\\DepartureBoard.csproj",
         "projectName": "DepartureBoard",
-        "projectPath": "c:\\Users\\Server\\Documents\\GitHub\\departue_board\\DepartureBoard\\DepartureBoard.csproj",
+        "projectPath": "C:\\Users\\Server\\Documents\\GitHub\\departue_board\\DepartureBoard\\DepartureBoard.csproj",
         "packagesPath": "C:\\Users\\Server\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\Server\\Documents\\GitHub\\departue_board\\DepartureBoard\\obj\\",
+        "outputPath": "C:\\Users\\Server\\Documents\\GitHub\\departue_board\\DepartureBoard\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Server\\AppData\\Roaming\\NuGet\\NuGet.Config"

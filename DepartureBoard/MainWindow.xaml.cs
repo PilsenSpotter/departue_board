@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -30,7 +30,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private readonly List<string> _selectedStopIds = new();
     private int _minutesAfter = 20;
-    private int _refreshSeconds = 30;
+    private int _refreshSeconds = 5;
     private string _apiKey = string.Empty;
     private string? _statusMessage;
     private string _stopSearchText = string.Empty;
@@ -534,11 +534,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         return departure.Route?.Type switch
         {
-            0 => "🚊",
-            1 => "🚇",
-            2 => "🚆",
-            3 => "🚍",
-            11 => "🚎",
+            0 => "🚋",   // tramvaj
+            1 => "🚇",   // metro
+            2 => "🚆",   // vlak
+            3 => "🚌",   // bus
+            11 => "🚎",  // trolejbus
             _ => string.Empty
         };
     }
@@ -571,7 +571,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         return accessible;
     }
-private string GetAccessibilitySymbol(Departure departure)
+    private string GetAccessibilitySymbol(Departure departure)
     {
         bool accessible =
             (departure.Trip?.WheelchairAccessible ?? 0) == 1 ||
