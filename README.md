@@ -4,7 +4,7 @@ Autor: Oliver Bocko
 Jednoducha desktopova tabule odjezdu pro PID postavena nad Golemio API.
 
 ## Aktualni verze
-0.0.1.6 — https://github.com/PilsenSpotter/departue_board/releases/tag/0.0.1.6
+0.0.1  https://github.com/PilsenSpotter/departue_board/releases/tag/0.0.1
 
 ## Funkce
 - Svetly/tmavy motiv s prepinacem v zahlavi okna.

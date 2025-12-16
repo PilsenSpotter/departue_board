@@ -1,7 +1,10 @@
 # Changelog
 
-## 0.0.1.6
+## Unreleased
 - Pridan tmavy/svetly motiv s prepinacem v zahlavi okna.
+- Pridano offline cache pro rychlejsi nacitani zastavek
+
+## 0.0.1.6
 - Offline cache: GTFS stops a posledni odjezdy se uchovavaji a zobrazi pri vypadku site/API.
 - Jemne doladeni barev (Win11-like) a redesign tabulky odjezdu (rounded karty, novy hover/alternace).
 - Scrollovani primo v seznamu vybranych zastavek i ve vysledcich vyhledavani koleckem/touchpadem.
