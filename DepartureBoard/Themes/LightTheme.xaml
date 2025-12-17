@@ -17,6 +17,8 @@
     <SolidColorBrush x:Key="ListHoverBrush" Color="#E6EEF8" />
     <SolidColorBrush x:Key="ListSelectedBrush" Color="#D6E4F6" />
     <SolidColorBrush x:Key="ListAlternateBrush" Color="#F4F7FB" />
+    <SolidColorBrush x:Key="DelayMinorBrush" Color="#FFF4DA" />
+    <SolidColorBrush x:Key="DelayMajorBrush" Color="#FFE4E4" />
 
     <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FFFFFF" />
     <SolidColorBrush x:Key="InputBorderBrush" Color="#D8E1ED" />

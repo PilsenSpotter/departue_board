@@ -46,6 +46,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _showTrolley = true;
     private bool _hasPlatformFilters;
     private AccessibilityFilter _accessibilityFilter = AccessibilityFilter.All;
+    private bool _showOnTimeOnly;
     private double _defaultListFontSize;
     private readonly double _displayModeFontSize = 16;
     private WindowState _normalWindowState;
@@ -193,6 +194,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         set
         {
             if (SetField(ref _accessibilityFilter, value))
+            {
+                TriggerFilterRefresh();
+                SaveUserSettingsIfEnabled();
+            }
+        }
+    }
+    public bool ShowOnTimeOnly
+    {
+        get => _showOnTimeOnly;
+        set
+        {
+            if (SetField(ref _showOnTimeOnly, value))
             {
                 TriggerFilterRefresh();
                 SaveUserSettingsIfEnabled();
@@ -421,6 +434,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return departures
             .Where(IsModeAllowed)
             .Where(IsPlatformAllowed)
+            .Where(IsOnTimeAllowed)
             .Where(d => IsAccessibilityAllowed(d, vehicleInfos))
             .Select(d => MapDeparture(d, now, vehicleInfos))
             .Where(d => d is not null)
@@ -452,6 +466,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             countdown = $"{Math.Round(diff.TotalMinutes)} min";
         }
 
+        var (delayText, delayMinutes) = GetDelayInfo(departure);
+
         return new DepartureDisplay
         {
             Line = departure.Route?.ShortName ?? "-",
@@ -460,31 +476,65 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Platform = string.IsNullOrWhiteSpace(departure.Stop?.PlatformCode) ? "-" : departure.Stop!.PlatformCode!,
             DepartureTime = when.Value.ToLocalTime().ToString("HH:mm"),
             Countdown = countdown,
-            Delay = GetDelayText(departure),
+            Delay = delayText,
             Accessibility = GetAccessibilitySymbol(departure, vehicleInfos),
             VehicleType = ResolveVehicleLabel(departure, vehicleInfos),
-            When = when.Value.ToLocalTime()
+            When = when.Value.ToLocalTime(),
+            DelayMinutes = delayMinutes,
+            DelayCategory = ResolveDelayCategory(delayMinutes)
         };
     }
 
-    private string GetDelayText(Departure departure)
+    private (string text, double? minutes) GetDelayInfo(Departure departure)
     {
         var predicted = departure.DepartureTimestamp?.Predicted;
         var scheduled = departure.DepartureTimestamp?.Scheduled;
 
         if (predicted == null || scheduled == null)
         {
-            return "-";
+            return ("-", null);
         }
 
         var delay = predicted.Value - scheduled.Value;
-        if (Math.Abs(delay.TotalMinutes) < 0.5)
+        var minutes = delay.TotalMinutes;
+        if (Math.Abs(minutes) < 0.5)
         {
-            return "vcas";
+            return ("vcas", minutes);
         }
 
-        var sign = delay.TotalMinutes >= 0 ? "+" : "-";
-        return $"{sign}{Math.Abs(delay.TotalMinutes):0} min";
+        var sign = minutes >= 0 ? "+" : "-";
+        return ($"{sign}{Math.Abs(minutes):0} min", minutes);
+    }
+
+    private string ResolveDelayCategory(double? minutes)
+    {
+        if (minutes is null)
+        {
+            return "none";
+        }
+
+        if (minutes >= 5)
+        {
+            return "major";
+        }
+
+        if (minutes >= 1)
+        {
+            return "minor";
+        }
+
+        return "none";
+    }
+
+    private bool IsOnTimeAllowed(Departure departure)
+    {
+        if (!ShowOnTimeOnly)
+        {
+            return true;
+        }
+
+        var (_, minutes) = GetDelayInfo(departure);
+        return minutes.HasValue && Math.Abs(minutes.Value) < 0.5;
     }
 
     private static bool IsMhdMode(Departure departure)
@@ -859,6 +909,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             ShowTrain = settings.ShowTrain;
             ShowTrolley = settings.ShowTrolley;
             AccessibilityFilter = settings.AccessibilityFilter;
+            ShowOnTimeOnly = settings.ShowOnTimeOnly;
 
             MinutesAfter = settings.MinutesAfter <= 0 ? 20 : settings.MinutesAfter;
             RefreshSeconds = settings.RefreshSeconds < 5 ? 5 : settings.RefreshSeconds;
@@ -912,6 +963,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 ShowTrain = ShowTrain,
                 ShowTrolley = ShowTrolley,
                 AccessibilityFilter = AccessibilityFilter,
+                ShowOnTimeOnly = ShowOnTimeOnly,
                 IsDisplayMode = IsDisplayMode,
                 IsBoardMode = IsBoardMode
             };

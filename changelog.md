@@ -4,6 +4,9 @@
 - Pridan rezim zobrazovac (fullscreen + always on top, skryje horni panel, vetsi pismo; ESC ukonci).
 - Novy PID-like rezim tabule: LED panel s oran‘ovym textem, fullscreen, zobrazuje top 4 odjezdy, cas, stanoviste a pristupnost.
 - Pridano prepinani ukladani nastaveni (zastavky, filtry, motiv); pri vypnuti se smazou ulozene hodnoty.
+- Obarveni odjezdu podle zpozdeni (jen v normalnim seznamu, ne v rezimu tabule).
+- Fix: barva zpozdeni ma prednost pred alternovanim radku, aby byla videt vzdy.
+- Pridan filtr „Jen včas“ pro skrytí zpožděných spojů.
 
 ## 0.0.1.6.5
 - Pridan tmavy/svetly motiv s prepinacem v zahlavi okna.

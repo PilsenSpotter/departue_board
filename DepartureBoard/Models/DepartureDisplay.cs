@@ -12,4 +12,6 @@ public class DepartureDisplay
     public DateTimeOffset When { get; set; }
     public string Accessibility { get; set; } = string.Empty;
     public string VehicleType { get; set; } = string.Empty;
+    public double? DelayMinutes { get; set; }
+    public string DelayCategory { get; set; } = string.Empty;
 }

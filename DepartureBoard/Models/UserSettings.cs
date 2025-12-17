@@ -13,6 +13,7 @@ public class UserSettings
     public bool ShowTrain { get; set; } = true;
     public bool ShowTrolley { get; set; } = true;
     public AccessibilityFilter AccessibilityFilter { get; set; } = AccessibilityFilter.All;
+    public bool ShowOnTimeOnly { get; set; }
     public bool IsDisplayMode { get; set; }
     public bool IsBoardMode { get; set; }
 }

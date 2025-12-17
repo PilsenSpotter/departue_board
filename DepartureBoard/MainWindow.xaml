@@ -287,6 +287,10 @@
                     </ComboBox>
                 </StackPanel>
 
+                <StackPanel Margin="0 0 16 8">
+                    <CheckBox Content="Jen včas" IsChecked="{Binding ShowOnTimeOnly, UpdateSourceTrigger=PropertyChanged}" Foreground="{DynamicResource PrimaryForegroundBrush}"/>
+                </StackPanel>
+
                 <StackPanel Margin="0 0 16 8" Visibility="{Binding HasPlatformFilters, Converter={StaticResource BoolToVisibility}}">
                     <TextBlock Text="Stanoviště (MHD)" Foreground="{DynamicResource MutedBrush}" Margin="0 0 0 4"/>
                     <ItemsControl ItemsSource="{Binding Platforms}">
@@ -333,14 +337,20 @@
                         <Setter Property="Margin" Value="0 2"/>
                         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                         <Style.Triggers>
+                            <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                <Setter Property="Background" Value="{DynamicResource ListAlternateBrush}"/>
+                            </Trigger>
+                            <DataTrigger Binding="{Binding DelayCategory}" Value="minor">
+                                <Setter Property="Background" Value="{DynamicResource DelayMinorBrush}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding DelayCategory}" Value="major">
+                                <Setter Property="Background" Value="{DynamicResource DelayMajorBrush}"/>
+                            </DataTrigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Background" Value="{DynamicResource ListHoverBrush}"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter Property="Background" Value="{DynamicResource ListSelectedBrush}"/>
-                            </Trigger>
-                            <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                                <Setter Property="Background" Value="{DynamicResource ListAlternateBrush}"/>
                             </Trigger>
                         </Style.Triggers>
                     </Style>
