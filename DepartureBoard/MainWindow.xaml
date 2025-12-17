@@ -9,7 +9,8 @@
         Icon="icon.ico"
         Background="{DynamicResource WindowBackgroundBrush}"
         Foreground="{DynamicResource PrimaryForegroundBrush}"
-        Loaded="OnLoaded">
+        Loaded="OnLoaded"
+        KeyDown="OnKeyDown">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -142,7 +143,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Background="{DynamicResource HeaderBrush}" Padding="12" CornerRadius="10" Margin="0 0 0 6">
+        <Border x:Name="HeaderPanel" Grid.Row="0" Background="{DynamicResource HeaderBrush}" Padding="12" CornerRadius="10" Margin="0 0 0 6">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition />
@@ -165,7 +166,7 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="1" Background="{DynamicResource PanelBackgroundBrush}" Padding="12" CornerRadius="8">
+        <Border x:Name="ControlsPanel" Grid.Row="1" Background="{DynamicResource PanelBackgroundBrush}" Padding="12" CornerRadius="8">
             <WrapPanel ItemWidth="260" MinWidth="220" VerticalAlignment="Center" Margin="0" >
                 <StackPanel Margin="0 0 16 8" Width="250">
                     <TextBlock Text="Vyhledat zastávku" Foreground="{DynamicResource MutedBrush}" Margin="0 0 0 4"/>
@@ -386,9 +387,20 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource MutedBrush}" Margin="4 0 0 0" VerticalAlignment="Center"/>
-            <TextBlock Grid.Column="1" Text="Created by Oliver Bocko" Foreground="{DynamicResource MutedBrush}" Margin="0 0 4 0" VerticalAlignment="Center"/>
+            <ToggleButton Grid.Column="1"
+                          Content="Rezim zobrazovac"
+                          IsChecked="{Binding IsDisplayMode, Mode=TwoWay}"
+                          Padding="12 6"
+                          Margin="8 0"
+                          MinWidth="150"
+                          Background="{DynamicResource CardBackgroundBrush}"
+                          BorderBrush="{DynamicResource CardBorderBrush}"
+                          Foreground="{DynamicResource PrimaryForegroundBrush}"
+                          ToolTip="Fullscreen + always on top; ESC ukonci rezim." />
+            <TextBlock Grid.Column="2" Text="Created by Oliver Bocko" Foreground="{DynamicResource MutedBrush}" Margin="0 0 4 0" VerticalAlignment="Center"/>
         </Grid>
     </Grid>
 </Window>

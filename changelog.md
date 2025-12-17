@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased
+- Pridan rezim zobrazovac (fullscreen + always on top, skryje horni panel, vetsi pismo; ESC ukonci).
+
 ## 0.0.1.6.5
 - Pridan tmavy/svetly motiv s prepinacem v zahlavi okna.
 - Pridano offline cache pro rychlejsi nacitani zastavek

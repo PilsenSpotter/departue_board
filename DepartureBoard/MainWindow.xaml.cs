@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Threading;
 using DepartureBoard.Models;
 using DepartureBoard.Services;
@@ -27,6 +28,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly ResourceDictionary _lightTheme;
     private ResourceDictionary? _currentTheme;
     private bool _isLightTheme;
+    private bool _isDisplayMode;
 
     private readonly List<string> _selectedStopIds = new();
     private int _minutesAfter = 20;
@@ -41,6 +43,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _showTrolley = true;
     private bool _hasPlatformFilters;
     private AccessibilityFilter _accessibilityFilter = AccessibilityFilter.All;
+    private double _defaultListFontSize;
+    private readonly double _displayModeFontSize = 16;
+    private WindowState _normalWindowState;
+    private WindowStyle _normalWindowStyle;
+    private ResizeMode _normalResizeMode;
 
     public ObservableCollection<DepartureDisplay> Departures { get; } = new();
     public ObservableCollection<StopEntry> StopResults { get; } = new();
@@ -61,6 +68,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     public string ThemeToggleLabel => IsLightTheme ? "Svetly motiv" : "Tmavy motiv";
+
+    public bool IsDisplayMode
+    {
+        get => _isDisplayMode;
+        set
+        {
+            if (SetField(ref _isDisplayMode, value))
+            {
+                ApplyDisplayMode(value);
+            }
+        }
+    }
 
     public bool ShowBus
     {
@@ -209,12 +228,26 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Interval = TimeSpan.FromSeconds(_refreshSeconds)
         };
         _timer.Tick += async (_, _) => await RefreshDeparturesAsync();
+
+        _defaultListFontSize = DeparturesList.FontSize;
+        _normalWindowState = WindowState;
+        _normalWindowStyle = WindowStyle;
+        _normalResizeMode = ResizeMode;
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         _ = RefreshDeparturesAsync();
         _timer.Start();
+    }
+
+    private void OnKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && IsDisplayMode)
+        {
+            IsDisplayMode = false;
+            e.Handled = true;
+        }
     }
 
     private async void RefreshButton_OnClick(object sender, RoutedEventArgs e)
@@ -725,6 +758,38 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         _pendingFilterRefresh = true;
         _ = RefreshDeparturesAsync();
+    }
+
+    private void ApplyDisplayMode(bool enabled)
+    {
+        if (HeaderPanel == null || ControlsPanel == null || DeparturesList == null)
+        {
+            return;
+        }
+
+        HeaderPanel.Visibility = enabled ? Visibility.Collapsed : Visibility.Visible;
+        ControlsPanel.Visibility = enabled ? Visibility.Collapsed : Visibility.Visible;
+
+        if (enabled)
+        {
+            _normalWindowState = WindowState;
+            _normalWindowStyle = WindowStyle;
+            _normalResizeMode = ResizeMode;
+
+            WindowStyle = WindowStyle.None;
+            ResizeMode = ResizeMode.NoResize;
+            WindowState = WindowState.Maximized;
+            Topmost = true;
+            DeparturesList.FontSize = _displayModeFontSize;
+        }
+        else
+        {
+            WindowStyle = _normalWindowStyle;
+            ResizeMode = _normalResizeMode;
+            WindowState = _normalWindowState;
+            Topmost = false;
+            DeparturesList.FontSize = _defaultListFontSize;
+        }
     }
 
     private void ApplyTheme(ResourceDictionary theme)
