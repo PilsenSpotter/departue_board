@@ -15,6 +15,7 @@ public class OfflineCacheService
     private readonly string _root;
     private readonly string _stopsPath;
     private readonly string _departuresPath;
+    private readonly string _settingsPath;
 
     public OfflineCacheService()
     {
@@ -23,6 +24,7 @@ public class OfflineCacheService
             "DepartureBoard");
         _stopsPath = Path.Combine(_root, "stops.json");
         _departuresPath = Path.Combine(_root, "departures.json");
+        _settingsPath = Path.Combine(_root, "settings.json");
     }
 
     public async Task SaveStopsAsync(IEnumerable<StopEntry> stops, CancellationToken cancellationToken = default)
@@ -73,6 +75,34 @@ public class OfflineCacheService
 
         await using var stream = File.OpenRead(_departuresPath);
         return await JsonSerializer.DeserializeAsync<CachedDepartures>(stream, _jsonOptions, cancellationToken);
+    }
+
+    public async Task SaveUserSettingsAsync(UserSettings settings, CancellationToken cancellationToken = default)
+    {
+        Directory.CreateDirectory(_root);
+        await using var stream = File.Create(_settingsPath);
+        await JsonSerializer.SerializeAsync(stream, settings, _jsonOptions, cancellationToken);
+    }
+
+    public async Task<UserSettings?> LoadUserSettingsAsync(CancellationToken cancellationToken = default)
+    {
+        if (!File.Exists(_settingsPath))
+        {
+            return null;
+        }
+
+        await using var stream = File.OpenRead(_settingsPath);
+        return await JsonSerializer.DeserializeAsync<UserSettings>(stream, _jsonOptions, cancellationToken);
+    }
+
+    public Task ClearUserSettingsAsync()
+    {
+        if (File.Exists(_settingsPath))
+        {
+            File.Delete(_settingsPath);
+        }
+
+        return Task.CompletedTask;
     }
 }
 

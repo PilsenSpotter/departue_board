@@ -30,6 +30,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _isLightTheme;
     private bool _isDisplayMode;
     private bool _isBoardMode;
+    private bool _rememberSettings = true;
+    private bool _isLoadingSettings;
 
     private readonly List<string> _selectedStopIds = new();
     private int _minutesAfter = 20;
@@ -67,6 +69,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             {
                 ApplyTheme(value ? _lightTheme : _darkTheme);
                 OnPropertyChanged(nameof(ThemeToggleLabel));
+                SaveUserSettingsIfEnabled();
             }
         }
     }
@@ -81,6 +84,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (SetField(ref _isDisplayMode, value))
             {
                 ApplyDisplayMode(value);
+                SaveUserSettingsIfEnabled();
             }
         }
     }
@@ -93,6 +97,26 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (SetField(ref _isBoardMode, value))
             {
                 ApplyBoardMode(value);
+                SaveUserSettingsIfEnabled();
+            }
+        }
+    }
+
+    public bool RememberSettings
+    {
+        get => _rememberSettings;
+        set
+        {
+            if (SetField(ref _rememberSettings, value))
+            {
+                if (!value)
+                {
+                    _ = _cache.ClearUserSettingsAsync();
+                }
+                else
+                {
+                    SaveUserSettingsIfEnabled();
+                }
             }
         }
     }
@@ -105,6 +129,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (SetField(ref _showBus, value))
             {
                 TriggerFilterRefresh();
+                SaveUserSettingsIfEnabled();
             }
         }
     }
@@ -117,6 +142,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (SetField(ref _showTram, value))
             {
                 TriggerFilterRefresh();
+                SaveUserSettingsIfEnabled();
             }
         }
     }
@@ -129,6 +155,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (SetField(ref _showMetro, value))
             {
                 TriggerFilterRefresh();
+                SaveUserSettingsIfEnabled();
             }
         }
     }
@@ -141,6 +168,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (SetField(ref _showTrain, value))
             {
                 TriggerFilterRefresh();
+                SaveUserSettingsIfEnabled();
             }
         }
     }
@@ -153,6 +181,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (SetField(ref _showTrolley, value))
             {
                 TriggerFilterRefresh();
+                SaveUserSettingsIfEnabled();
             }
         }
     }
@@ -166,6 +195,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (SetField(ref _accessibilityFilter, value))
             {
                 TriggerFilterRefresh();
+                SaveUserSettingsIfEnabled();
             }
         }
     }
@@ -181,7 +211,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         set
         {
             if (value <= 0) value = 1;
-            SetField(ref _minutesAfter, value);
+            if (SetField(ref _minutesAfter, value))
+            {
+                SaveUserSettingsIfEnabled();
+            }
         }
     }
 
@@ -194,6 +227,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (SetField(ref _refreshSeconds, value))
             {
                 _timer.Interval = TimeSpan.FromSeconds(_refreshSeconds);
+                SaveUserSettingsIfEnabled();
             }
         }
     }
@@ -265,8 +299,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _normalResizeMode = ResizeMode;
     }
 
-    private void OnLoaded(object sender, RoutedEventArgs e)
+    private async void OnLoaded(object sender, RoutedEventArgs e)
     {
+        await LoadUserSettingsAsync();
         _ = RefreshDeparturesAsync();
         _timer.Start();
         _clockTimer.Start();
@@ -754,6 +789,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         OnPropertyChanged(nameof(ShowStopName));
         OnPropertyChanged(nameof(BoardDepartures));
+        SaveUserSettingsIfEnabled();
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
@@ -800,6 +836,92 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         _pendingFilterRefresh = true;
         _ = RefreshDeparturesAsync();
+    }
+
+    private async Task LoadUserSettingsAsync()
+    {
+        try
+        {
+            _isLoadingSettings = true;
+            var settings = await _cache.LoadUserSettingsAsync();
+            if (settings == null)
+            {
+                return;
+            }
+
+            _rememberSettings = settings.RememberSettings;
+            OnPropertyChanged(nameof(RememberSettings));
+
+            IsLightTheme = settings.IsLightTheme;
+            ShowBus = settings.ShowBus;
+            ShowTram = settings.ShowTram;
+            ShowMetro = settings.ShowMetro;
+            ShowTrain = settings.ShowTrain;
+            ShowTrolley = settings.ShowTrolley;
+            AccessibilityFilter = settings.AccessibilityFilter;
+
+            MinutesAfter = settings.MinutesAfter <= 0 ? 20 : settings.MinutesAfter;
+            RefreshSeconds = settings.RefreshSeconds < 5 ? 5 : settings.RefreshSeconds;
+
+            SelectedStops.Clear();
+            foreach (var stop in settings.SelectedStops ?? Enumerable.Empty<StopEntry>())
+            {
+                SelectedStops.Add(stop);
+            }
+            UpdateSelectedStopIds();
+
+            if (settings.IsDisplayMode)
+            {
+                IsDisplayMode = true;
+            }
+
+            if (settings.IsBoardMode)
+            {
+                IsBoardMode = true;
+            }
+        }
+        catch
+        {
+            // ignore settings load errors
+        }
+        finally
+        {
+            _isLoadingSettings = false;
+        }
+    }
+
+    private void SaveUserSettingsIfEnabled()
+    {
+        if (!_rememberSettings || _isLoadingSettings)
+        {
+            return;
+        }
+
+        try
+        {
+            var settings = new UserSettings
+            {
+                RememberSettings = _rememberSettings,
+                SelectedStops = SelectedStops.ToList(),
+                MinutesAfter = MinutesAfter,
+                RefreshSeconds = RefreshSeconds,
+                IsLightTheme = IsLightTheme,
+                ShowBus = ShowBus,
+                ShowTram = ShowTram,
+                ShowMetro = ShowMetro,
+                ShowTrain = ShowTrain,
+                ShowTrolley = ShowTrolley,
+                AccessibilityFilter = AccessibilityFilter,
+                IsDisplayMode = IsDisplayMode,
+                IsBoardMode = IsBoardMode
+            };
+
+            _ = _cache.SaveUserSettingsAsync(settings);
+        }
+        catch
+        {
+            // ignore persistence errors
+        }
     }
 
     private void ApplyBoardMode(bool enabled)
@@ -863,11 +985,4 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Resources.MergedDictionaries.Insert(0, theme);
         _currentTheme = theme;
     }
-}
-
-public enum AccessibilityFilter
-{
-    All,
-    AccessibleOnly,
-    HighFloorOnly
 }

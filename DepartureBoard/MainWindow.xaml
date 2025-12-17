@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DepartureBoard"
+        xmlns:models="clr-namespace:DepartureBoard.Models"
         mc:Ignorable="d"
         Title="PID Departure Board" Height="650" Width="1050"
         Icon="icon.ico"
@@ -132,6 +133,40 @@
                     </Trigger>
                 </Style.Triggers>
             </Style>
+            <Style x:Key="SwitchToggleStyle" TargetType="ToggleButton">
+                <Setter Property="Width" Value="50" />
+                <Setter Property="Height" Value="26" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Grid>
+                                <Border x:Name="SwitchTrack"
+                                        Background="#DDDDDD"
+                                        BorderBrush="{DynamicResource CardBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="13" />
+                                <Ellipse x:Name="SwitchThumb"
+                                         Width="22"
+                                         Height="22"
+                                         Fill="White"
+                                         Margin="2"
+                                         HorizontalAlignment="Left" />
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="SwitchTrack" Property="Background" Value="{DynamicResource AccentBrush}" />
+                                    <Setter TargetName="SwitchThumb" Property="HorizontalAlignment" Value="Right" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.5" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
@@ -246,9 +281,9 @@
                     <ComboBox SelectedValuePath="Tag"
                               SelectedValue="{Binding AccessibilityFilter, UpdateSourceTrigger=PropertyChanged}"
                               Width="180">
-                        <ComboBoxItem Content="🌐 Vše" Tag="{x:Static local:AccessibilityFilter.All}"/>
-                        <ComboBoxItem Content="♿ Jen bezbariérové" Tag="{x:Static local:AccessibilityFilter.AccessibleOnly}"/>
-                        <ComboBoxItem Content="⛔ Jen vysokopodlažní" Tag="{x:Static local:AccessibilityFilter.HighFloorOnly}"/>
+                        <ComboBoxItem Content="🌐 Vše" Tag="{x:Static models:AccessibilityFilter.All}"/>
+                        <ComboBoxItem Content="♿ Jen bezbariérové" Tag="{x:Static models:AccessibilityFilter.AccessibleOnly}"/>
+                        <ComboBoxItem Content="⛔ Jen vysokopodlažní" Tag="{x:Static models:AccessibilityFilter.HighFloorOnly}"/>
                     </ComboBox>
                 </StackPanel>
 
@@ -506,9 +541,16 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource MutedBrush}" Margin="4 0 0 0" VerticalAlignment="Center"/>
-            <ToggleButton Grid.Column="1"
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8 0">
+                <TextBlock Text="Pamatovat nastaveni" Foreground="{DynamicResource MutedBrush}" Margin="0 0 8 0" VerticalAlignment="Center"/>
+                <ToggleButton Style="{StaticResource SwitchToggleStyle}"
+                              IsChecked="{Binding RememberSettings, Mode=TwoWay}"
+                              ToolTip="Uklada vybrane zastavky, filtry a motiv; vypnuti smaze ulozene nastaveni." />
+            </StackPanel>
+            <ToggleButton Grid.Column="2"
                           Content="Rezim zobrazovac"
                           IsChecked="{Binding IsDisplayMode, Mode=TwoWay}"
                           Padding="12 6"
@@ -518,7 +560,7 @@
                           BorderBrush="{DynamicResource CardBorderBrush}"
                           Foreground="{DynamicResource PrimaryForegroundBrush}"
                           ToolTip="Fullscreen + always on top; ESC ukonci rezim." />
-            <ToggleButton Grid.Column="2"
+            <ToggleButton Grid.Column="3"
                           Content="Rezim tabule"
                           IsChecked="{Binding IsBoardMode, Mode=TwoWay}"
                           Padding="12 6"
@@ -528,7 +570,7 @@
                           BorderBrush="{DynamicResource CardBorderBrush}"
                           Foreground="{DynamicResource PrimaryForegroundBrush}"
                           ToolTip="PID-like panel: fullscreen, schova UI, ESC ukonci." />
-            <TextBlock Grid.Column="3" Text="Created by Oliver Bocko" Foreground="{DynamicResource MutedBrush}" Margin="0 0 4 0" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="4" Text="Created by Oliver Bocko" Foreground="{DynamicResource MutedBrush}" Margin="8 0 4 0" VerticalAlignment="Center"/>
         </Grid>
     </Grid>
 </Window>
