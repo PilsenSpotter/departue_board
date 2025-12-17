@@ -4,12 +4,14 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Media;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using WF = System.Windows.Forms;
 using DepartureBoard.Models;
 using DepartureBoard.Services;
 
@@ -49,6 +51,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private AccessibilityFilter _accessibilityFilter = AccessibilityFilter.All;
     private bool _showOnTimeOnly;
     private string _newPresetName = string.Empty;
+    private bool _alertsEnabled;
+    private int _alertMinutesThreshold = 3;
+    private int _alertDelayThreshold = 5;
+    private readonly HashSet<string> _alertedDepartures = new(StringComparer.OrdinalIgnoreCase);
+    private readonly WF.NotifyIcon _notifyIcon;
     private double _defaultListFontSize;
     private readonly double _displayModeFontSize = 16;
     private WindowState _normalWindowState;
@@ -234,6 +241,48 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         set => SetField(ref _newPresetName, value);
     }
 
+    public bool AlertsEnabled
+    {
+        get => _alertsEnabled;
+        set
+        {
+            if (SetField(ref _alertsEnabled, value))
+            {
+                if (!value)
+                {
+                    _alertedDepartures.Clear();
+                }
+                SaveUserSettingsIfEnabled();
+            }
+        }
+    }
+
+    public int AlertMinutesThreshold
+    {
+        get => _alertMinutesThreshold;
+        set
+        {
+            if (value < 0) value = 0;
+            if (SetField(ref _alertMinutesThreshold, value))
+            {
+                SaveUserSettingsIfEnabled();
+            }
+        }
+    }
+
+    public int AlertDelayThreshold
+    {
+        get => _alertDelayThreshold;
+        set
+        {
+            if (value < 0) value = 0;
+            if (SetField(ref _alertDelayThreshold, value))
+            {
+                SaveUserSettingsIfEnabled();
+            }
+        }
+    }
+
     public int MinutesAfter
     {
         get => _minutesAfter;
@@ -326,6 +375,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _normalWindowState = WindowState;
         _normalWindowStyle = WindowStyle;
         _normalResizeMode = ResizeMode;
+
+        _notifyIcon = new WF.NotifyIcon
+        {
+            Visible = true,
+            Text = "PID Departure Board",
+            Icon = LoadNotifyIcon()
+        };
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -336,7 +392,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _clockTimer.Start();
     }
 
-    private void OnKeyDown(object sender, KeyEventArgs e)
+    private void OnKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
         if (e.Key == Key.Escape && (IsDisplayMode || IsBoardMode))
         {
@@ -400,28 +456,29 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 : await _client.GetVehicleInfoByTripAsync(tripIds, cancellationToken: CancellationToken.None);
 
             var now = DateTimeOffset.Now;
-        var mapped = BuildDepartureDisplays(departures, vehicleInfos, now);
+            var mapped = BuildDepartureDisplays(departures, vehicleInfos, now);
 
-        Departures.Clear();
-        foreach (var item in mapped)
-        {
-            Departures.Add(item);
-        }
+            Departures.Clear();
+            foreach (var item in mapped)
+            {
+                Departures.Add(item);
+            }
 
-        UpdateLineFilters(departures);
-        UpdatePlatformFilters(departures);
+            UpdateLineFilters(departures);
+            UpdatePlatformFilters(departures);
+            CheckAlerts(mapped);
 
-        OnPropertyChanged(nameof(BoardDepartures));
-        StatusMessage = $"Posledni aktualizace: {DateTime.Now:HH:mm:ss}, odjezdu: {Departures.Count}.";
+            OnPropertyChanged(nameof(BoardDepartures));
+            StatusMessage = $"Posledni aktualizace: {DateTime.Now:HH:mm:ss}, odjezdu: {Departures.Count}.";
     }
     catch (Exception ex)
     {
         var cached = await _cache.LoadDeparturesAsync();
         if (cached != null && StopSetsCompatible(cached.StopIds, _selectedStopIds))
         {
-            UpdateLineFilters(cached.Departures);
-            UpdatePlatformFilters(cached.Departures);
-            var mapped = BuildDepartureDisplays(cached.Departures, new Dictionary<string, VehiclePositionInfo>(), DateTimeOffset.Now);
+                UpdateLineFilters(cached.Departures);
+                UpdatePlatformFilters(cached.Departures);
+                var mapped = BuildDepartureDisplays(cached.Departures, new Dictionary<string, VehiclePositionInfo>(), DateTimeOffset.Now);
 
                 Departures.Clear();
                 foreach (var item in mapped)
@@ -429,6 +486,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     Departures.Add(item);
                 }
 
+                CheckAlerts(mapped);
                 OnPropertyChanged(nameof(BoardDepartures));
                 StatusMessage = $"Offline rezim: ukazuji cache z {cached.SavedAt.LocalDateTime:HH:mm} (odjezdu: {Departures.Count}, okno {cached.MinutesAfter} min).";
             }
@@ -867,7 +925,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void StopResults_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (sender is not ListBox lb)
+        if (sender is not System.Windows.Controls.ListBox lb)
         {
             return;
         }
@@ -956,6 +1014,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         preset.ShowTrolley = ShowTrolley;
         preset.AccessibilityFilter = AccessibilityFilter;
         preset.ShowOnTimeOnly = ShowOnTimeOnly;
+        preset.AlertsEnabled = AlertsEnabled;
+        preset.AlertMinutesThreshold = AlertMinutesThreshold;
+        preset.AlertDelayThreshold = AlertDelayThreshold;
 
         if (existing == null)
         {
@@ -992,6 +1053,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             ShowTrolley = preset.ShowTrolley;
             AccessibilityFilter = preset.AccessibilityFilter;
             ShowOnTimeOnly = preset.ShowOnTimeOnly;
+            AlertsEnabled = preset.AlertsEnabled;
+            AlertMinutesThreshold = preset.AlertMinutesThreshold;
+            AlertDelayThreshold = preset.AlertDelayThreshold;
 
             StatusMessage = $"Set \"{preset.Name}\" nahran.";
             _ = RefreshDeparturesAsync();
@@ -1012,6 +1076,112 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Presets.Remove(preset);
         StatusMessage = $"Set \"{preset.Name}\" odebran.";
         SaveUserSettingsIfEnabled();
+    }
+
+    private void CheckAlerts(IEnumerable<DepartureDisplay> departures)
+    {
+        if (!AlertsEnabled)
+        {
+            _alertedDepartures.Clear();
+            return;
+        }
+
+        var now = DateTimeOffset.Now;
+        var activeKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var d in departures)
+        {
+            var key = $"{d.Line}|{d.Destination}|{d.Platform}|{d.DepartureTime}";
+            activeKeys.Add(key);
+
+            var minutesToDeparture = (d.When - now).TotalMinutes;
+            var soon = minutesToDeparture >= 0 && minutesToDeparture <= AlertMinutesThreshold;
+            var delayed = d.DelayMinutes.HasValue && d.DelayMinutes.Value >= AlertDelayThreshold;
+
+            if ((soon || delayed) && !_alertedDepartures.Contains(key))
+            {
+                PlayAlertSound();
+                StatusMessage = soon
+                    ? $"Odjezd za {minutesToDeparture:0} min: {d.Line} {d.Destination} {d.Platform}"
+                    : $"Zpozdeni {d.DelayMinutes:0} min: {d.Line} {d.Destination}";
+                ShowNotification("Odjezdy", StatusMessage);
+                _alertedDepartures.Add(key);
+            }
+        }
+
+        _alertedDepartures.IntersectWith(activeKeys);
+    }
+
+    private static void PlayAlertSound()
+    {
+        try
+        {
+            SystemSounds.Exclamation.Play();
+        }
+        catch
+        {
+            // ignore sound errors
+        }
+    }
+
+    private void ShowNotification(string title, string message)
+    {
+        try
+        {
+            _notifyIcon.BalloonTipTitle = title;
+            _notifyIcon.BalloonTipText = message;
+            _notifyIcon.BalloonTipIcon = WF.ToolTipIcon.Info;
+            if (_notifyIcon.Icon == null)
+            {
+                _notifyIcon.Icon = LoadNotifyIcon();
+            }
+            _notifyIcon.Visible = true;
+            _notifyIcon.ShowBalloonTip(3000);
+        }
+        catch
+        {
+            // ignore notification errors
+        }
+    }
+
+    private static System.Drawing.Icon LoadNotifyIcon()
+    {
+        try
+        {
+            var resourceUri = new Uri("pack://application:,,,/icon.ico", UriKind.Absolute);
+            using var iconStream = System.Windows.Application.GetResourceStream(resourceUri)?.Stream;
+            if (iconStream != null)
+            {
+                return new System.Drawing.Icon(iconStream);
+            }
+        }
+        catch
+        {
+            // ignore resource load errors
+        }
+
+        try
+        {
+            var exePath = typeof(MainWindow).Assembly.Location;
+            var associatedIcon = System.Drawing.Icon.ExtractAssociatedIcon(exePath);
+            if (associatedIcon != null)
+            {
+                return associatedIcon;
+            }
+        }
+        catch
+        {
+            // ignore icon extraction errors
+        }
+
+        return System.Drawing.SystemIcons.Information;
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _notifyIcon.Visible = false;
+        _notifyIcon.Dispose();
+        base.OnClosed(e);
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
@@ -1082,6 +1252,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             ShowTrolley = settings.ShowTrolley;
             AccessibilityFilter = settings.AccessibilityFilter;
             ShowOnTimeOnly = settings.ShowOnTimeOnly;
+            AlertsEnabled = settings.AlertsEnabled;
+            AlertMinutesThreshold = settings.AlertMinutesThreshold;
+            AlertDelayThreshold = settings.AlertDelayThreshold;
 
             Presets.Clear();
             foreach (var preset in settings.Presets ?? new List<Preset>())
@@ -1144,7 +1317,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 ShowOnTimeOnly = ShowOnTimeOnly,
                 IsDisplayMode = IsDisplayMode,
                 IsBoardMode = IsBoardMode,
-                Presets = Presets.ToList()
+                Presets = Presets.ToList(),
+                AlertsEnabled = AlertsEnabled,
+                AlertMinutesThreshold = AlertMinutesThreshold,
+                AlertDelayThreshold = AlertDelayThreshold
             };
 
             _ = _cache.SaveUserSettingsAsync(settings);

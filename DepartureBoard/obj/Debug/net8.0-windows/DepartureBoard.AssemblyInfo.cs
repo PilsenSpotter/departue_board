@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DepartureBoard")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4d9efebe2d927f3868817304cf35e0254708b335")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e6d382ea98b80b77a9fd7fc110f16561d7509e49")]
 [assembly: System.Reflection.AssemblyProductAttribute("DepartureBoard")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DepartureBoard")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

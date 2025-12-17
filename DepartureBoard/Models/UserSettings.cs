@@ -17,4 +17,7 @@ public class UserSettings
     public bool IsDisplayMode { get; set; }
     public bool IsBoardMode { get; set; }
     public List<Preset> Presets { get; set; } = new();
+    public bool AlertsEnabled { get; set; }
+    public int AlertMinutesThreshold { get; set; } = 3;
+    public int AlertDelayThreshold { get; set; } = 5;
 }

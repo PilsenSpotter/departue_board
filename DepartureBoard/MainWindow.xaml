@@ -291,6 +291,19 @@
                     <CheckBox Content="Jen vcas" IsChecked="{Binding ShowOnTimeOnly, UpdateSourceTrigger=PropertyChanged}" Foreground="{DynamicResource PrimaryForegroundBrush}"/>
                 </StackPanel>
 
+                <StackPanel Margin="0 0 16 8" Width="260">
+                    <TextBlock Text="Upozorneni" Foreground="{DynamicResource MutedBrush}" Margin="0 0 0 4"/>
+                    <CheckBox Content="Zapnout" IsChecked="{Binding AlertsEnabled, UpdateSourceTrigger=PropertyChanged}" Foreground="{DynamicResource PrimaryForegroundBrush}" Margin="0 0 0 4"/>
+                    <StackPanel Orientation="Horizontal" Margin="0 4 0 2">
+                        <TextBlock Text="Za ≤" Foreground="{DynamicResource MutedBrush}" Margin="0 4 4 0" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding AlertMinutesThreshold, UpdateSourceTrigger=PropertyChanged}" Width="40"/>
+                        <TextBlock Text="min" Foreground="{DynamicResource MutedBrush}" Margin="4 4 8 0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Zpozdeni ≥" Foreground="{DynamicResource MutedBrush}" Margin="0 4 4 0" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding AlertDelayThreshold, UpdateSourceTrigger=PropertyChanged}" Width="40"/>
+                        <TextBlock Text="min" Foreground="{DynamicResource MutedBrush}" Margin="4 4 0 0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </StackPanel>
+
                 <StackPanel Margin="0 0 16 8" Visibility="{Binding HasPlatformFilters, Converter={StaticResource BoolToVisibility}}">
                     <TextBlock Text="Stanoviště (MHD)" Foreground="{DynamicResource MutedBrush}" Margin="0 0 0 4"/>
                     <ItemsControl ItemsSource="{Binding Platforms}">

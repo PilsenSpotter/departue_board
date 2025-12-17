@@ -1,6 +1,6 @@
 ﻿using System.Configuration;
 using System.Data;
-using System.Windows;
+using Application = System.Windows.Application;
 
 namespace DepartureBoard;
 
@@ -10,4 +10,3 @@ namespace DepartureBoard;
 public partial class App : Application
 {
 }
-

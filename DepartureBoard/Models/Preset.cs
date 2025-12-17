@@ -13,4 +13,7 @@ public class Preset
     public bool ShowTrolley { get; set; } = true;
     public AccessibilityFilter AccessibilityFilter { get; set; } = AccessibilityFilter.All;
     public bool ShowOnTimeOnly { get; set; }
+    public bool AlertsEnabled { get; set; }
+    public int AlertMinutesThreshold { get; set; } = 3;
+    public int AlertDelayThreshold { get; set; } = 5;
 }
