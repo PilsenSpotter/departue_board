@@ -8,6 +8,7 @@
 - Fix: barva zpozdeni ma prednost pred alternovanim radku, aby byla videt vzdy.
 - Pridan filtr „Jen včas“ pro skrytí zpožděných spojů.
 - Pridany filtry linek podle prave nactenych odjezdu (stejny styl jako stanoviště).
+- Sety zastavek/filtru: ulozitelne pod nazvem, nacitani/mazani ulozeno v %AppData%.
 
 ## 0.0.1.6.5
 - Pridan tmavy/svetly motiv s prepinacem v zahlavi okna.

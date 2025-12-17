@@ -288,7 +288,7 @@
                 </StackPanel>
 
                 <StackPanel Margin="0 0 16 8">
-                    <CheckBox Content="Jen včas" IsChecked="{Binding ShowOnTimeOnly, UpdateSourceTrigger=PropertyChanged}" Foreground="{DynamicResource PrimaryForegroundBrush}"/>
+                    <CheckBox Content="Jen vcas" IsChecked="{Binding ShowOnTimeOnly, UpdateSourceTrigger=PropertyChanged}" Foreground="{DynamicResource PrimaryForegroundBrush}"/>
                 </StackPanel>
 
                 <StackPanel Margin="0 0 16 8" Visibility="{Binding HasPlatformFilters, Converter={StaticResource BoolToVisibility}}">
@@ -327,6 +327,33 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                </StackPanel>
+
+                <StackPanel Margin="0 0 16 8" Width="260">
+                    <TextBlock Text="Sety zastavek" Foreground="{DynamicResource MutedBrush}" Margin="0 0 0 4"/>
+                    <StackPanel Orientation="Horizontal" Margin="0 0 0 6">
+                        <TextBox Width="140"
+                                 Text="{Binding NewPresetName, UpdateSourceTrigger=PropertyChanged}"
+                                 IsEnabled="{Binding RememberSettings}" />
+                        <Button Content="Ulozit" Margin="6 0 0 0" Padding="10 4"
+                                Click="SavePresetButton_OnClick"
+                                IsEnabled="{Binding RememberSettings}"/>
+                    </StackPanel>
+                    <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1" CornerRadius="6">
+                        <ScrollViewer MaxHeight="140">
+                            <ItemsControl ItemsSource="{Binding Presets}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Margin="6 4">
+                                            <TextBlock Text="{Binding Name}" Width="120" Foreground="{DynamicResource PrimaryForegroundBrush}" />
+                                            <Button Content="Pouzit" Padding="8 4" Margin="4 0 0 0" Click="ApplyPresetButton_OnClick"/>
+                                            <Button Content="Smazat" Padding="8 4" Margin="4 0 0 0" Click="DeletePresetButton_OnClick"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
                 </StackPanel>
 
                 <StackPanel Margin="0 0 16 8" VerticalAlignment="Bottom">

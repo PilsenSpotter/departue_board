@@ -48,6 +48,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _hasLineFilters;
     private AccessibilityFilter _accessibilityFilter = AccessibilityFilter.All;
     private bool _showOnTimeOnly;
+    private string _newPresetName = string.Empty;
     private double _defaultListFontSize;
     private readonly double _displayModeFontSize = 16;
     private WindowState _normalWindowState;
@@ -62,6 +63,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public ObservableCollection<StopEntry> SelectedStops { get; } = new();
     public ObservableCollection<PlatformFilter> Platforms { get; } = new();
     public ObservableCollection<LineFilter> Lines { get; } = new();
+    public ObservableCollection<Preset> Presets { get; } = new();
 
     public bool IsLightTheme
     {
@@ -114,6 +116,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             {
                 if (!value)
                 {
+                    Presets.Clear();
                     _ = _cache.ClearUserSettingsAsync();
                 }
                 else
@@ -223,6 +226,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         get => _hasLineFilters;
         private set => SetField(ref _hasLineFilters, value);
+    }
+
+    public string NewPresetName
+    {
+        get => _newPresetName;
+        set => SetField(ref _newPresetName, value);
     }
 
     public int MinutesAfter
@@ -918,6 +927,93 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         SaveUserSettingsIfEnabled();
     }
 
+    private void SavePresetButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (!RememberSettings)
+        {
+            StatusMessage = "Ulozeni je vypnuto (povol Pamatovat nastaveni).";
+            return;
+        }
+
+        var name = NewPresetName?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            StatusMessage = "Zadej jmeno setu.";
+            return;
+        }
+
+        var existing = Presets.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        var preset = existing ?? new Preset();
+
+        preset.Name = name;
+        preset.Stops = SelectedStops.ToList();
+        preset.MinutesAfter = MinutesAfter;
+        preset.RefreshSeconds = RefreshSeconds;
+        preset.ShowBus = ShowBus;
+        preset.ShowTram = ShowTram;
+        preset.ShowMetro = ShowMetro;
+        preset.ShowTrain = ShowTrain;
+        preset.ShowTrolley = ShowTrolley;
+        preset.AccessibilityFilter = AccessibilityFilter;
+        preset.ShowOnTimeOnly = ShowOnTimeOnly;
+
+        if (existing == null)
+        {
+            Presets.Add(preset);
+        }
+
+        StatusMessage = $"Set \"{name}\" ulozen.";
+        SaveUserSettingsIfEnabled();
+    }
+
+    private void ApplyPresetButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: Preset preset })
+        {
+            return;
+        }
+
+        _isLoadingSettings = true;
+        try
+        {
+            SelectedStops.Clear();
+            foreach (var stop in preset.Stops ?? new List<StopEntry>())
+            {
+                SelectedStops.Add(stop);
+            }
+            UpdateSelectedStopIds();
+
+            MinutesAfter = preset.MinutesAfter;
+            RefreshSeconds = preset.RefreshSeconds;
+            ShowBus = preset.ShowBus;
+            ShowTram = preset.ShowTram;
+            ShowMetro = preset.ShowMetro;
+            ShowTrain = preset.ShowTrain;
+            ShowTrolley = preset.ShowTrolley;
+            AccessibilityFilter = preset.AccessibilityFilter;
+            ShowOnTimeOnly = preset.ShowOnTimeOnly;
+
+            StatusMessage = $"Set \"{preset.Name}\" nahran.";
+            _ = RefreshDeparturesAsync();
+        }
+        finally
+        {
+            _isLoadingSettings = false;
+        }
+    }
+
+    private void DeletePresetButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: Preset preset })
+        {
+            return;
+        }
+
+        Presets.Remove(preset);
+        StatusMessage = $"Set \"{preset.Name}\" odebran.";
+        SaveUserSettingsIfEnabled();
+    }
+
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -987,6 +1083,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             AccessibilityFilter = settings.AccessibilityFilter;
             ShowOnTimeOnly = settings.ShowOnTimeOnly;
 
+            Presets.Clear();
+            foreach (var preset in settings.Presets ?? new List<Preset>())
+            {
+                Presets.Add(preset);
+            }
+
             MinutesAfter = settings.MinutesAfter <= 0 ? 20 : settings.MinutesAfter;
             RefreshSeconds = settings.RefreshSeconds < 5 ? 5 : settings.RefreshSeconds;
 
@@ -1041,7 +1143,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 AccessibilityFilter = AccessibilityFilter,
                 ShowOnTimeOnly = ShowOnTimeOnly,
                 IsDisplayMode = IsDisplayMode,
-                IsBoardMode = IsBoardMode
+                IsBoardMode = IsBoardMode,
+                Presets = Presets.ToList()
             };
 
             _ = _cache.SaveUserSettingsAsync(settings);
