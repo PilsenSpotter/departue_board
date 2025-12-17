@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.0.1.6.5
 - Pridan tmavy/svetly motiv s prepinacem v zahlavi okna.
 - Pridano offline cache pro rychlejsi nacitani zastavek
 
