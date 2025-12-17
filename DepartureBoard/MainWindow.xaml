@@ -276,8 +276,18 @@
                 </StackPanel>
             </WrapPanel>
         </Border>
-
-        <Border Grid.Row="2" Background="{DynamicResource ListBackgroundBrush}" CornerRadius="10" Padding="6">
+        <Grid Grid.Row="2">
+        <Border Background="{DynamicResource ListBackgroundBrush}" CornerRadius="10" Padding="6" x:Name="ListPanel">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsBoardMode}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
             <ListView ItemsSource="{Binding Departures}" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource PrimaryForegroundBrush}"
                       x:Name="DeparturesList" AlternationCount="2">
                 <ListView.ItemContainerStyle>
@@ -383,9 +393,117 @@
             </ListView>
         </Border>
 
-        <Grid Grid.Row="3">
+        <Border x:Name="BoardPanel"
+                Background="#2F3531"
+                CornerRadius="10"
+                Padding="12"
+                Visibility="{Binding IsBoardMode, Converter={StaticResource BoolToVisibility}}"
+                BorderBrush="#4A4F4B"
+                BorderThickness="2">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Border Grid.Row="0" Background="#444C48" CornerRadius="6" Padding="10" Margin="0 0 0 12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="150"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" Margin="0 0 12 0">
+                            <StackPanel Margin="0 0 12 0">
+                                <TextBlock Text="LINKA" Foreground="#C8D2C9" FontSize="12" FontWeight="Bold" />
+                                <TextBlock Text="LINE" Foreground="#C8D2C9" FontSize="10" />
+                            </StackPanel>
+                            <StackPanel Margin="0 0 12 0">
+                                <TextBlock Text="CIL" Foreground="#C8D2C9" FontSize="12" FontWeight="Bold" />
+                                <TextBlock Text="DESTINATION" Foreground="#C8D2C9" FontSize="10" />
+                            </StackPanel>
+                            <StackPanel Margin="0 0 12 0">
+                                <TextBlock Text="STAN." Foreground="#C8D2C9" FontSize="12" FontWeight="Bold" />
+                                <TextBlock Text="PLATFORM" Foreground="#C8D2C9" FontSize="10" />
+                            </StackPanel>
+                            <StackPanel Margin="0 0 12 0">
+                                <TextBlock Text="ACC" Foreground="#C8D2C9" FontSize="12" FontWeight="Bold" />
+                                <TextBlock Text="ACCESS" Foreground="#C8D2C9" FontSize="10" />
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="ODJEZD" Foreground="#C8D2C9" FontSize="12" FontWeight="Bold" />
+                                <TextBlock Text="DEPARTURE" Foreground="#C8D2C9" FontSize="10" />
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                            <TextBlock Text="CAS / TIME" Foreground="#C8D2C9" FontSize="12" FontWeight="Bold" HorizontalAlignment="Right"/>
+                            <TextBlock Text="{Binding CurrentTimeDisplay}" Foreground="#FFB200" FontSize="26" FontFamily="Consolas, 'Courier New', monospace" HorizontalAlignment="Right"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Row="1" Background="#202522" CornerRadius="6" Padding="16" BorderBrush="#4A4F4B" BorderThickness="1">
+                    <ItemsControl ItemsSource="{Binding BoardDepartures}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0 2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="100"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Line}"
+                                               FontFamily="Consolas, 'Courier New', monospace"
+                                               FontSize="22"
+                                               FontWeight="Bold"
+                                               Foreground="#FFB200"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Destination}"
+                                               FontFamily="Consolas, 'Courier New', monospace"
+                                               FontSize="22"
+                                               Foreground="#FFB200"
+                                               TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding Platform}"
+                                               FontFamily="Consolas, 'Courier New', monospace"
+                                               FontSize="20"
+                                               Foreground="#FFB200"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="3"
+                                               Text="{Binding Accessibility}"
+                                               FontFamily="Consolas, 'Courier New', monospace"
+                                               FontSize="20"
+                                               Foreground="#FFB200"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="4"
+                                               Text="{Binding Countdown}"
+                                               FontFamily="Consolas, 'Courier New', monospace"
+                                               FontSize="22"
+                                               Foreground="#FFB200"
+                                               HorizontalAlignment="Right"
+                                               VerticalAlignment="Center"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
+            </Grid>
+        </Border>
+        </Grid>
+
+        <Grid x:Name="BottomPanel" Grid.Row="3">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
@@ -400,7 +518,17 @@
                           BorderBrush="{DynamicResource CardBorderBrush}"
                           Foreground="{DynamicResource PrimaryForegroundBrush}"
                           ToolTip="Fullscreen + always on top; ESC ukonci rezim." />
-            <TextBlock Grid.Column="2" Text="Created by Oliver Bocko" Foreground="{DynamicResource MutedBrush}" Margin="0 0 4 0" VerticalAlignment="Center"/>
+            <ToggleButton Grid.Column="2"
+                          Content="Rezim tabule"
+                          IsChecked="{Binding IsBoardMode, Mode=TwoWay}"
+                          Padding="12 6"
+                          Margin="8 0"
+                          MinWidth="150"
+                          Background="{DynamicResource CardBackgroundBrush}"
+                          BorderBrush="{DynamicResource CardBorderBrush}"
+                          Foreground="{DynamicResource PrimaryForegroundBrush}"
+                          ToolTip="PID-like panel: fullscreen, schova UI, ESC ukonci." />
+            <TextBlock Grid.Column="3" Text="Created by Oliver Bocko" Foreground="{DynamicResource MutedBrush}" Margin="0 0 4 0" VerticalAlignment="Center"/>
         </Grid>
     </Grid>
 </Window>

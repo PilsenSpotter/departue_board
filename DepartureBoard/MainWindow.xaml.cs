@@ -29,6 +29,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private ResourceDictionary? _currentTheme;
     private bool _isLightTheme;
     private bool _isDisplayMode;
+    private bool _isBoardMode;
 
     private readonly List<string> _selectedStopIds = new();
     private int _minutesAfter = 20;
@@ -48,6 +49,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private WindowState _normalWindowState;
     private WindowStyle _normalWindowStyle;
     private ResizeMode _normalResizeMode;
+    private bool _isFullscreenActive;
+    private readonly DispatcherTimer _clockTimer;
+    private string _currentTimeDisplay = DateTime.Now.ToString("HH:mm:ss");
 
     public ObservableCollection<DepartureDisplay> Departures { get; } = new();
     public ObservableCollection<StopEntry> StopResults { get; } = new();
@@ -77,6 +81,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (SetField(ref _isDisplayMode, value))
             {
                 ApplyDisplayMode(value);
+            }
+        }
+    }
+
+    public bool IsBoardMode
+    {
+        get => _isBoardMode;
+        set
+        {
+            if (SetField(ref _isBoardMode, value))
+            {
+                ApplyBoardMode(value);
             }
         }
     }
@@ -200,6 +216,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         set => SetField(ref _stopSearchText, value);
     }
 
+    public string CurrentTimeDisplay
+    {
+        get => _currentTimeDisplay;
+        set => SetField(ref _currentTimeDisplay, value);
+    }
+
+    public IEnumerable<DepartureDisplay> BoardDepartures => Departures;
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public MainWindow()
@@ -229,6 +253,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         };
         _timer.Tick += async (_, _) => await RefreshDeparturesAsync();
 
+        _clockTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(1)
+        };
+        _clockTimer.Tick += (_, _) => CurrentTimeDisplay = DateTime.Now.ToString("HH:mm:ss");
+
         _defaultListFontSize = DeparturesList.FontSize;
         _normalWindowState = WindowState;
         _normalWindowStyle = WindowStyle;
@@ -239,13 +269,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         _ = RefreshDeparturesAsync();
         _timer.Start();
+        _clockTimer.Start();
     }
 
     private void OnKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Escape && IsDisplayMode)
+        if (e.Key == Key.Escape && (IsDisplayMode || IsBoardMode))
         {
-            IsDisplayMode = false;
+            if (IsBoardMode)
+            {
+                IsBoardMode = false;
+            }
+            else
+            {
+                IsDisplayMode = false;
+            }
             e.Handled = true;
         }
     }
@@ -305,6 +343,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 Departures.Add(item);
             }
 
+            OnPropertyChanged(nameof(BoardDepartures));
             StatusMessage = $"Posledni aktualizace: {DateTime.Now:HH:mm:ss}, odjezdu: {Departures.Count}.";
         }
         catch (Exception ex)
@@ -321,12 +360,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     Departures.Add(item);
                 }
 
+                OnPropertyChanged(nameof(BoardDepartures));
                 StatusMessage = $"Offline rezim: ukazuji cache z {cached.SavedAt.LocalDateTime:HH:mm} (odjezdu: {Departures.Count}, okno {cached.MinutesAfter} min).";
             }
             else
             {
                 StatusMessage = $"Nepodarilo se nacist data: {ex.Message}";
                 Departures.Clear();
+                OnPropertyChanged(nameof(BoardDepartures));
             }
         }
         finally
@@ -369,7 +410,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         else if (diff.TotalMinutes < 1)
         {
-            countdown = "za chvili";
+            countdown = ">1 min";
         }
         else
         {
@@ -712,6 +753,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _selectedStopIds.AddRange(ids);
 
         OnPropertyChanged(nameof(ShowStopName));
+        OnPropertyChanged(nameof(BoardDepartures));
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
@@ -760,6 +802,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _ = RefreshDeparturesAsync();
     }
 
+    private void ApplyBoardMode(bool enabled)
+    {
+        ApplyDisplayMode(_isDisplayMode);
+    }
+
     private void ApplyDisplayMode(bool enabled)
     {
         if (HeaderPanel == null || ControlsPanel == null || DeparturesList == null)
@@ -767,10 +814,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
-        HeaderPanel.Visibility = enabled ? Visibility.Collapsed : Visibility.Visible;
-        ControlsPanel.Visibility = enabled ? Visibility.Collapsed : Visibility.Visible;
+        var shouldFullscreen = enabled || _isBoardMode;
 
-        if (enabled)
+        HeaderPanel.Visibility = shouldFullscreen ? Visibility.Collapsed : Visibility.Visible;
+        ControlsPanel.Visibility = shouldFullscreen ? Visibility.Collapsed : Visibility.Visible;
+
+        if (BottomPanel != null)
+        {
+            BottomPanel.Visibility = _isBoardMode ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        if (shouldFullscreen && !_isFullscreenActive)
         {
             _normalWindowState = WindowState;
             _normalWindowStyle = WindowStyle;
@@ -781,14 +835,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             WindowState = WindowState.Maximized;
             Topmost = true;
             DeparturesList.FontSize = _displayModeFontSize;
+            _isFullscreenActive = true;
         }
-        else
+        else if (!shouldFullscreen && _isFullscreenActive)
         {
             WindowStyle = _normalWindowStyle;
             ResizeMode = _normalResizeMode;
             WindowState = _normalWindowState;
             Topmost = false;
             DeparturesList.FontSize = _defaultListFontSize;
+            _isFullscreenActive = false;
         }
     }
 
