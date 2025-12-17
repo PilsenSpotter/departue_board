@@ -45,6 +45,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _showTrain = true;
     private bool _showTrolley = true;
     private bool _hasPlatformFilters;
+    private bool _hasLineFilters;
     private AccessibilityFilter _accessibilityFilter = AccessibilityFilter.All;
     private bool _showOnTimeOnly;
     private double _defaultListFontSize;
@@ -60,6 +61,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public ObservableCollection<StopEntry> StopResults { get; } = new();
     public ObservableCollection<StopEntry> SelectedStops { get; } = new();
     public ObservableCollection<PlatformFilter> Platforms { get; } = new();
+    public ObservableCollection<LineFilter> Lines { get; } = new();
 
     public bool IsLightTheme
     {
@@ -217,6 +219,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         get => _hasPlatformFilters;
         private set => SetField(ref _hasPlatformFilters, value);
     }
+    public bool HasLineFilters
+    {
+        get => _hasLineFilters;
+        private set => SetField(ref _hasLineFilters, value);
+    }
 
     public int MinutesAfter
     {
@@ -358,6 +365,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             {
                 StatusMessage = "Vyber zastavku.";
                 ClearPlatformFilters();
+                ClearLineFilters();
                 return;
             }
 
@@ -383,24 +391,28 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 : await _client.GetVehicleInfoByTripAsync(tripIds, cancellationToken: CancellationToken.None);
 
             var now = DateTimeOffset.Now;
-            var mapped = BuildDepartureDisplays(departures, vehicleInfos, now);
+        var mapped = BuildDepartureDisplays(departures, vehicleInfos, now);
 
-            Departures.Clear();
-            foreach (var item in mapped)
-            {
-                Departures.Add(item);
-            }
-
-            OnPropertyChanged(nameof(BoardDepartures));
-            StatusMessage = $"Posledni aktualizace: {DateTime.Now:HH:mm:ss}, odjezdu: {Departures.Count}.";
-        }
-        catch (Exception ex)
+        Departures.Clear();
+        foreach (var item in mapped)
         {
-            var cached = await _cache.LoadDeparturesAsync();
-            if (cached != null && StopSetsCompatible(cached.StopIds, _selectedStopIds))
-            {
-                UpdatePlatformFilters(cached.Departures);
-                var mapped = BuildDepartureDisplays(cached.Departures, new Dictionary<string, VehiclePositionInfo>(), DateTimeOffset.Now);
+            Departures.Add(item);
+        }
+
+        UpdateLineFilters(departures);
+        UpdatePlatformFilters(departures);
+
+        OnPropertyChanged(nameof(BoardDepartures));
+        StatusMessage = $"Posledni aktualizace: {DateTime.Now:HH:mm:ss}, odjezdu: {Departures.Count}.";
+    }
+    catch (Exception ex)
+    {
+        var cached = await _cache.LoadDeparturesAsync();
+        if (cached != null && StopSetsCompatible(cached.StopIds, _selectedStopIds))
+        {
+            UpdateLineFilters(cached.Departures);
+            UpdatePlatformFilters(cached.Departures);
+            var mapped = BuildDepartureDisplays(cached.Departures, new Dictionary<string, VehiclePositionInfo>(), DateTimeOffset.Now);
 
                 Departures.Clear();
                 foreach (var item in mapped)
@@ -434,6 +446,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return departures
             .Where(IsModeAllowed)
             .Where(IsPlatformAllowed)
+            .Where(IsLineAllowed)
             .Where(IsOnTimeAllowed)
             .Where(d => IsAccessibilityAllowed(d, vehicleInfos))
             .Select(d => MapDeparture(d, now, vehicleInfos))
@@ -578,6 +591,23 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return allowed.Contains(platform, StringComparer.OrdinalIgnoreCase);
     }
 
+    private bool IsLineAllowed(Departure departure)
+    {
+        if (!HasLineFilters)
+        {
+            return true;
+        }
+
+        var line = departure.Route?.ShortName;
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            return true;
+        }
+
+        var allowed = Lines.Where(l => l.IsSelected).Select(l => l.Name);
+        return allowed.Contains(line, StringComparer.OrdinalIgnoreCase);
+    }
+
     private void UpdatePlatformFilters(IEnumerable<Departure> departures)
     {
         var platforms = departures
@@ -606,6 +636,33 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         HasPlatformFilters = Platforms.Count > 0;
     }
 
+    private void UpdateLineFilters(IEnumerable<Departure> departures)
+    {
+        var lines = departures
+            .Select(d => d.Route?.ShortName?.Trim() ?? string.Empty)
+            .Where(l => !string.IsNullOrWhiteSpace(l))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(l => l, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var previousSelection = Lines.ToDictionary(l => l.Name, l => l.IsSelected, StringComparer.OrdinalIgnoreCase);
+
+        ClearLineFilters();
+
+        foreach (var line in lines)
+        {
+            var filter = new LineFilter
+            {
+                Name = line,
+                IsSelected = previousSelection.TryGetValue(line, out var isSelected) ? isSelected : true
+            };
+            filter.PropertyChanged += LineFilterOnPropertyChanged;
+            Lines.Add(filter);
+        }
+
+        HasLineFilters = Lines.Count > 0;
+    }
+
     private void ClearPlatformFilters()
     {
         foreach (var platform in Platforms)
@@ -617,9 +674,28 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         HasPlatformFilters = false;
     }
 
+    private void ClearLineFilters()
+    {
+        foreach (var line in Lines)
+        {
+            line.PropertyChanged -= LineFilterOnPropertyChanged;
+        }
+
+        Lines.Clear();
+        HasLineFilters = false;
+    }
+
     private void PlatformFilterOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(PlatformFilter.IsSelected))
+        {
+            TriggerFilterRefresh();
+        }
+    }
+
+    private void LineFilterOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(LineFilter.IsSelected))
         {
             TriggerFilterRefresh();
         }
